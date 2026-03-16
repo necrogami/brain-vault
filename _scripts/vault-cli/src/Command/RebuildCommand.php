@@ -109,6 +109,11 @@ final class RebuildCommand extends Command
                 $this->insertLinks($fm);
                 $this->insertBook($fm);
                 $this->insertReads($fm);
+                $this->insertMovie($fm);
+                $this->insertWatches($fm);
+                $this->insertTvShow($fm);
+                $this->insertGame($fm);
+                $this->insertPlaySessions($fm);
                 $this->insertSources($fm);
                 $this->insertTodos($fm);
                 $this->insertExternalRefs($fm);
@@ -321,6 +326,163 @@ final class RebuildCommand extends Command
                     ':date_read' => $this->formatDatetime($dateRead),
                 ],
             );
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $fm
+     */
+    private function insertMovie(array $fm): void
+    {
+        if (($fm['subdomain'] ?? null) !== 'movies') {
+            return;
+        }
+
+        if ($fm['director'] === null && $fm['imdb_id'] === null) {
+            return;
+        }
+
+        $this->db->execute(
+            <<<'SQL'
+                INSERT OR REPLACE INTO movies
+                    (doc_id, director, year, genre, runtime_min, rating, poster_url, imdb_id)
+                VALUES
+                    (:doc_id, :director, :year, :genre, :runtime_min, :rating, :poster_url, :imdb_id)
+            SQL,
+            [
+                ':doc_id' => $fm['id'],
+                ':director' => $fm['director'],
+                ':year' => $fm['year'],
+                ':genre' => $fm['genre'],
+                ':runtime_min' => $fm['runtime_min'],
+                ':rating' => $fm['rating'],
+                ':poster_url' => $fm['poster_url'],
+                ':imdb_id' => $fm['imdb_id'],
+            ],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $fm
+     */
+    private function insertWatches(array $fm): void
+    {
+        $watches = $fm['watches'] ?? [];
+
+        if (!is_array($watches) || $watches === []) {
+            return;
+        }
+
+        foreach ($watches as $dateWatched) {
+            $this->db->execute(
+                'INSERT INTO watches (doc_id, date_watched) VALUES (:doc_id, :date_watched)',
+                [
+                    ':doc_id' => $fm['id'],
+                    ':date_watched' => $this->formatDatetime($dateWatched),
+                ],
+            );
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $fm
+     */
+    private function insertTvShow(array $fm): void
+    {
+        if (($fm['subdomain'] ?? null) !== 'tv') {
+            return;
+        }
+
+        if ($fm['creator'] === null && $fm['imdb_id'] === null) {
+            return;
+        }
+
+        $this->db->execute(
+            <<<'SQL'
+                INSERT OR REPLACE INTO tv_shows
+                    (doc_id, creator, year_start, year_end, genre, total_seasons, seasons_watched, rating, poster_url, imdb_id)
+                VALUES
+                    (:doc_id, :creator, :year_start, :year_end, :genre, :total_seasons, :seasons_watched, :rating, :poster_url, :imdb_id)
+            SQL,
+            [
+                ':doc_id' => $fm['id'],
+                ':creator' => $fm['creator'],
+                ':year_start' => $fm['year_start'],
+                ':year_end' => $fm['year_end'],
+                ':genre' => $fm['genre'],
+                ':total_seasons' => $fm['total_seasons'],
+                ':seasons_watched' => $fm['seasons_watched'],
+                ':rating' => $fm['rating'],
+                ':poster_url' => $fm['poster_url'],
+                ':imdb_id' => $fm['imdb_id'],
+            ],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $fm
+     */
+    private function insertGame(array $fm): void
+    {
+        if (($fm['subdomain'] ?? null) !== 'games') {
+            return;
+        }
+
+        if ($fm['developer'] === null) {
+            return;
+        }
+
+        $this->db->execute(
+            <<<'SQL'
+                INSERT OR REPLACE INTO games
+                    (doc_id, developer, publisher, year, genre, platform, hours_played, rating, cover_url)
+                VALUES
+                    (:doc_id, :developer, :publisher, :year, :genre, :platform, :hours_played, :rating, :cover_url)
+            SQL,
+            [
+                ':doc_id' => $fm['id'],
+                ':developer' => $fm['developer'],
+                ':publisher' => $fm['publisher'],
+                ':year' => $fm['year'],
+                ':genre' => $fm['genre'],
+                ':platform' => $fm['platform'],
+                ':hours_played' => $fm['hours_played'],
+                ':rating' => $fm['rating'],
+                ':cover_url' => $fm['cover_url'],
+            ],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $fm
+     */
+    private function insertPlaySessions(array $fm): void
+    {
+        $sessions = $fm['play_sessions'] ?? [];
+
+        if (!is_array($sessions) || $sessions === []) {
+            return;
+        }
+
+        foreach ($sessions as $session) {
+            if (is_array($session)) {
+                $this->db->execute(
+                    'INSERT INTO play_sessions (doc_id, date_played, hours) VALUES (:doc_id, :date_played, :hours)',
+                    [
+                        ':doc_id' => $fm['id'],
+                        ':date_played' => $this->formatDatetime($session['date'] ?? null),
+                        ':hours' => $session['hours'] ?? null,
+                    ],
+                );
+            } else {
+                $this->db->execute(
+                    'INSERT INTO play_sessions (doc_id, date_played) VALUES (:doc_id, :date_played)',
+                    [
+                        ':doc_id' => $fm['id'],
+                        ':date_played' => $this->formatDatetime($session),
+                    ],
+                );
+            }
         }
     }
 

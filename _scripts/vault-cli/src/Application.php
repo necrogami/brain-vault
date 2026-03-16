@@ -63,6 +63,27 @@ final class Application extends BaseApplication
         $this->addCommand(new Command\Books\BooksRecentCommand($db));
         $this->addCommand(new Command\Books\BooksStatsCommand($db));
 
+        // Movie read commands
+        $this->addCommand(new Command\Movies\MoviesListCommand($db));
+        $this->addCommand(new Command\Movies\MoviesDirectorCommand($db));
+        $this->addCommand(new Command\Movies\MoviesRatingCommand($db));
+        $this->addCommand(new Command\Movies\MoviesRecentCommand($db));
+        $this->addCommand(new Command\Movies\MoviesStatsCommand($db));
+
+        // TV show read commands
+        $this->addCommand(new Command\Tv\TvListCommand($db));
+        $this->addCommand(new Command\Tv\TvWatchingCommand($db));
+        $this->addCommand(new Command\Tv\TvRatingCommand($db));
+        $this->addCommand(new Command\Tv\TvStatsCommand($db));
+
+        // Game read commands
+        $this->addCommand(new Command\Games\GamesListCommand($db));
+        $this->addCommand(new Command\Games\GamesPlayingCommand($db));
+        $this->addCommand(new Command\Games\GamesBacklogCommand($db));
+        $this->addCommand(new Command\Games\GamesRatingCommand($db));
+        $this->addCommand(new Command\Games\GamesPlatformCommand($db));
+        $this->addCommand(new Command\Games\GamesStatsCommand($db));
+
         // Write commands
         $this->addCommand(new Command\Db\UpsertDocCommand($db));
         $this->addCommand(new Command\Db\SetTagsCommand($db));
@@ -74,5 +95,10 @@ final class Application extends BaseApplication
         $this->addCommand(new Command\Db\AddTodoCommand($db));
         $this->addCommand(new Command\Db\AddExternalRefCommand($db));
         $this->addCommand(new Command\Db\CloseDocCommand($db));
+        $this->addCommand(new Command\Db\UpsertMovieCommand($db));
+        $this->addCommand(new Command\Db\AddWatchCommand($db));
+        $this->addCommand(new Command\Db\UpsertTvShowCommand($db));
+        $this->addCommand(new Command\Db\UpsertGameCommand($db));
+        $this->addCommand(new Command\Db\AddPlaySessionCommand($db));
     }
 }

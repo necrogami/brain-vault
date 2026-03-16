@@ -142,12 +142,55 @@ reads:                    # list of dates read (most recent last)
   - 2026-03-01
 ```
 
+**Movie-specific header fields** (added after `summary`, only for `entertainment/movies` documents):
+```yaml
+director: "Director Name"
+year: 2026                # release year
+genre: "sci-fi"           # primary genre
+runtime_min: 148          # runtime in minutes
+rating: null              # S/A/B/C/D/E/F/DNF
+poster_url: null          # link to poster image
+imdb_id: null             # e.g. "tt1234567"
+watches:                  # list of dates watched (most recent last)
+  - 2026-03-16
+```
+
+**TV show-specific header fields** (added after `summary`, only for `entertainment/tv` documents):
+```yaml
+creator: "Creator Name"
+year_start: 2020          # first aired
+year_end: null            # null if ongoing
+genre: "drama"
+total_seasons: 5
+seasons_watched: 3        # progress tracking
+rating: null              # S/A/B/C/D/E/F/DNF
+poster_url: null
+imdb_id: null
+```
+
+**Game-specific header fields** (added after `summary`, only for `entertainment/games` documents):
+```yaml
+developer: "Studio Name"
+publisher: "Publisher Name"
+year: 2026                # release year
+genre: "rpg"
+platform: "PC"            # what you played it on
+hours_played: 45.5
+rating: null              # S/A/B/C/D/E/F/DNF
+cover_url: null
+play_sessions:            # list of play dates (with optional hours)
+  - date: 2026-03-16
+    hours: 3.5
+  - date: 2026-03-17
+    hours: 2.0
+```
+
 **Valid values:**
-- `status`: seed | growing | mature | dormant | closed | migrated | built | tbr (books only)
+- `status`: seed | growing | mature | dormant | closed | migrated | built | tbr (media backlog)
 - `priority`: p0-critical | p1-high | p2-medium | p3-low | p4-someday
 - `confidence`: speculative | low | medium | high | proven
 - `effort`: trivial | small | medium | large | epic
-- `rating` (books only): S | A | B | C | D | E | F | DNF
+- `rating` (media): S | A | B | C | D | E | F | DNF
 
 ### Status Lifecycle
 
@@ -227,6 +270,11 @@ Use these exact column names when writing SQL — do NOT guess:
 | `reads` | `id` (auto), `doc_id`, `date_read`, `created_at` |
 | `todos` | `id` (auto), `doc_id`, `content`, `due_date`, `status`, `priority`, `created_at` |
 | `external_refs` | `id` (auto), `doc_id`, `url`, `label`, `created_at` |
+| `movies` | `doc_id`, `director`, `year`, `genre`, `runtime_min`, `rating`, `poster_url`, `imdb_id` |
+| `watches` | `id` (auto), `doc_id`, `date_watched`, `created_at` |
+| `tv_shows` | `doc_id`, `creator`, `year_start`, `year_end`, `genre`, `total_seasons`, `seasons_watched`, `rating`, `poster_url`, `imdb_id` |
+| `games` | `doc_id`, `developer`, `publisher`, `year`, `genre`, `platform`, `hours_played`, `rating`, `cover_url` |
+| `play_sessions` | `id` (auto), `doc_id`, `date_played`, `hours`, `created_at` |
 | `documents_fts` | `id`, `title`, `summary`, `domain`, `subdomain` |
 
 ### Database Updates
@@ -234,7 +282,10 @@ Use these exact column names when writing SQL — do NOT guess:
 **After every document create/edit/delete**, Claude updates the relevant rows:
 - Parse the document's YAML frontmatter
 - INSERT OR REPLACE into `documents`, `tags`, `links`, `sources`, `todos` tables
-- For `entertainment/books` documents: also INSERT OR REPLACE into `books` table, and sync `reads` table from the `reads` list in YAML
+- For `entertainment/books` documents: also INSERT OR REPLACE into `books` table, and sync `reads` table
+- For `entertainment/movies` documents: also INSERT OR REPLACE into `movies` table, and sync `watches` table
+- For `entertainment/tv` documents: also INSERT OR REPLACE into `tv_shows` table
+- For `entertainment/games` documents: also INSERT OR REPLACE into `games` table, and sync `play_sessions` table
 - When deleting: remove from all tables (but remember — we never delete documents,
   only change status)
 
@@ -302,6 +353,21 @@ _scripts/vault-cli/bin/vault <command> [args]
 | `books:rating <tier>` | Books with a specific rating |
 | `books:recent [n]` | Last n reads (default: 10) |
 | `books:stats` | Rating breakdowns and re-read stats |
+| `movies:list` | All movies by director |
+| `movies:director <name>` | Movies by a specific director |
+| `movies:rating <tier>` | Movies with a specific rating |
+| `movies:recent [n]` | Last n watches (default: 10) |
+| `movies:stats` | Rating breakdowns and re-watch stats |
+| `tv:list` | All TV shows by creator |
+| `tv:watching` | Currently watching shows |
+| `tv:rating <tier>` | TV shows with a specific rating |
+| `tv:stats` | Rating breakdowns, watching/completed/dropped counts |
+| `games:list` | All games by developer |
+| `games:playing` | Currently playing games |
+| `games:backlog` | Games in backlog (seed/tbr) |
+| `games:platform <name>` | Games by platform |
+| `games:rating <tier>` | Games with a specific rating |
+| `games:stats` | Rating breakdowns, platform stats, total hours |
 
 ### Write Commands
 
@@ -316,6 +382,11 @@ _scripts/vault-cli/bin/vault <command> [args]
 | `db:add-source` | Add external source — `--id [--url] [--title] [--accessed]` |
 | `db:add-todo` | Add a TODO — `--content [--doc-id] [--due] [--priority] [--status]` |
 | `db:add-external-ref` | Add external reference — `--id --url [--label]` |
+| `db:upsert-movie` | Insert/update movie metadata — `--id [--director] [--year] [--genre] [--runtime-min] [--rating] [--poster-url] [--imdb-id]` |
+| `db:add-watch` | Log a watch date — `--id --date` |
+| `db:upsert-tv` | Insert/update TV show metadata — `--id [--creator] [--year-start] [--year-end] [--genre] [--total-seasons] [--seasons-watched] [--rating] [--poster-url] [--imdb-id]` |
+| `db:upsert-game` | Insert/update game metadata — `--id [--developer] [--publisher] [--year] [--genre] [--platform] [--hours-played] [--rating] [--cover-url]` |
+| `db:add-play-session` | Log a play session — `--id --date [--hours]` |
 | `db:close-doc` | Close with reason — `--id --status (closed/migrated/built) --reason` |
 
 ### Usage Rules

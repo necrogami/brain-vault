@@ -114,11 +114,94 @@ CREATE TABLE external_refs (
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ────────────────────────────────────
+-- Movie-specific metadata
+-- ────────────────────────────────────
+DROP TABLE IF EXISTS movies;
+CREATE TABLE movies (
+    doc_id        TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+    director      TEXT,
+    year          INTEGER,                         -- release year
+    genre         TEXT,                            -- primary genre
+    runtime_min   INTEGER,                         -- runtime in minutes
+    rating        TEXT,                            -- S/A/B/C/D/E/F/DNF
+    poster_url    TEXT,
+    imdb_id       TEXT                             -- for external lookups
+);
+
+-- ────────────────────────────────────
+-- Movie watch dates (supports re-watches)
+-- ────────────────────────────────────
+DROP TABLE IF EXISTS watches;
+CREATE TABLE watches (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id        TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    date_watched  DATE NOT NULL,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ────────────────────────────────────
+-- TV show-specific metadata
+-- ────────────────────────────────────
+DROP TABLE IF EXISTS tv_shows;
+CREATE TABLE tv_shows (
+    doc_id          TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+    creator         TEXT,                          -- showrunner/creator
+    year_start      INTEGER,                       -- first aired
+    year_end        INTEGER,                       -- NULL if ongoing
+    genre           TEXT,
+    total_seasons   INTEGER,
+    seasons_watched INTEGER,                       -- progress tracking
+    rating          TEXT,                          -- S/A/B/C/D/E/F/DNF
+    poster_url      TEXT,
+    imdb_id         TEXT
+);
+
+-- ────────────────────────────────────
+-- Game-specific metadata
+-- ────────────────────────────────────
+DROP TABLE IF EXISTS games;
+CREATE TABLE games (
+    doc_id        TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+    developer     TEXT,
+    publisher     TEXT,
+    year          INTEGER,                         -- release year
+    genre         TEXT,
+    platform      TEXT,                            -- what you played it on
+    hours_played  REAL,
+    rating        TEXT,                            -- S/A/B/C/D/E/F/DNF
+    cover_url     TEXT
+);
+
+-- ────────────────────────────────────
+-- Game play sessions (supports tracking over time)
+-- ────────────────────────────────────
+DROP TABLE IF EXISTS play_sessions;
+CREATE TABLE play_sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id        TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    date_played   DATE NOT NULL,
+    hours         REAL,                            -- optional per-session hours
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_books_author    ON books(author);
 CREATE INDEX idx_books_series    ON books(series_id);
 CREATE INDEX idx_books_rating    ON books(rating);
 CREATE INDEX idx_reads_doc       ON reads(doc_id);
 CREATE INDEX idx_reads_date      ON reads(date_read);
+CREATE INDEX idx_movies_director ON movies(director);
+CREATE INDEX idx_movies_year     ON movies(year);
+CREATE INDEX idx_movies_rating   ON movies(rating);
+CREATE INDEX idx_watches_doc     ON watches(doc_id);
+CREATE INDEX idx_watches_date    ON watches(date_watched);
+CREATE INDEX idx_tv_creator      ON tv_shows(creator);
+CREATE INDEX idx_tv_rating       ON tv_shows(rating);
+CREATE INDEX idx_games_developer ON games(developer);
+CREATE INDEX idx_games_platform  ON games(platform);
+CREATE INDEX idx_games_rating    ON games(rating);
+CREATE INDEX idx_play_sessions_doc  ON play_sessions(doc_id);
+CREATE INDEX idx_play_sessions_date ON play_sessions(date_played);
 
 -- ────────────────────────────────────
 -- Full-text search index
