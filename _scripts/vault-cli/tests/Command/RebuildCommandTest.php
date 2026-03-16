@@ -456,7 +456,7 @@ it('handles files with invalid frontmatter gracefully', function (): void {
     }
 });
 
-it('processes book-specific fields for personal/books domain', function (): void {
+it('processes book-specific fields for books subdomain', function (): void {
     ['root' => $root, 'db' => $db] = createTempProjectRoot();
 
     try {
