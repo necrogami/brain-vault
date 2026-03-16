@@ -12,6 +12,9 @@ it('registers all expected commands', function (): void {
 
     $commands = $app->all();
 
+    // Init command (always available)
+    expect($commands)->toHaveKey('init');
+
     // Read commands
     expect($commands)->toHaveKey('briefing')
         ->toHaveKey('todos')
@@ -30,6 +33,27 @@ it('registers all expected commands', function (): void {
         ->toHaveKey('books:recent')
         ->toHaveKey('books:stats');
 
+    // Movie commands
+    expect($commands)->toHaveKey('movies:list')
+        ->toHaveKey('movies:director')
+        ->toHaveKey('movies:rating')
+        ->toHaveKey('movies:recent')
+        ->toHaveKey('movies:stats');
+
+    // TV commands
+    expect($commands)->toHaveKey('tv:list')
+        ->toHaveKey('tv:watching')
+        ->toHaveKey('tv:rating')
+        ->toHaveKey('tv:stats');
+
+    // Game commands
+    expect($commands)->toHaveKey('games:list')
+        ->toHaveKey('games:playing')
+        ->toHaveKey('games:backlog')
+        ->toHaveKey('games:rating')
+        ->toHaveKey('games:platform')
+        ->toHaveKey('games:stats');
+
     // Db commands
     expect($commands)->toHaveKey('db:upsert-doc')
         ->toHaveKey('db:set-tags')
@@ -38,7 +62,12 @@ it('registers all expected commands', function (): void {
         ->toHaveKey('db:add-read')
         ->toHaveKey('db:update-status')
         ->toHaveKey('db:add-source')
-        ->toHaveKey('db:add-todo');
+        ->toHaveKey('db:add-todo')
+        ->toHaveKey('db:upsert-movie')
+        ->toHaveKey('db:add-watch')
+        ->toHaveKey('db:upsert-tv')
+        ->toHaveKey('db:upsert-game')
+        ->toHaveKey('db:add-play-session');
 });
 
 it('can run the list command', function (): void {

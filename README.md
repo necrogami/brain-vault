@@ -70,8 +70,18 @@ brain/
 └── vault/                 # Your ideas live here
     ├── tech/              # Technology, software, engineering
     ├── business/          # Business ideas, strategy, ventures
-    ├── personal/          # Journal, goals, books, reflections
+    ├── personal/          # Journal, goals, reflections
     ├── creative/          # Writing, worldbuilding, design, music
+    ├── entertainment/     # Books, movies, TV, games, anime
+    ├── music/             # Concerts, albums, discoveries
+    ├── travel/            # Trips, destinations, itineraries
+    ├── food/              # Restaurants, recipes, drinks
+    ├── fitness/           # Workouts, sports, martial arts
+    ├── education/         # Courses, certifications, languages
+    ├── home/              # Improvement, gardening, DIY, pets
+    ├── social/            # Events, networking, gifts, family
+    ├── hobbies/           # Photography, collections, outdoors
+    ├── career/            # Networking, skills, conferences
     └── meta/              # Standalone TODOs, vault reviews
 ```
 
@@ -175,17 +185,37 @@ You: The consulting idea is a child of my side-projects list
 
 Links are always bidirectional — the AI updates both documents.
 
-### Book Tracking
+### Media Tracking
 
-The vault has first-class book tracking with ratings, series management, and reading history.
+The vault has first-class tracking for **books**, **movies**, **TV shows**, and **games** — each with dedicated database tables, CLI commands, and an S/A/B/C/D/E/F tier rating system.
 
+**Books:**
 ```
 You: I just finished Iron Prince by Bryce O'Connor
 You: Started reading Dune
-You: Add the Stormweaver series
 ```
+The AI searches Goodreads for synopses and covers, handles series linking, and tracks reading history with re-read support.
 
-The AI searches Goodreads for synopses and covers, handles series linking, and tracks your reading with an S/A/B/C/D/E/F tier rating system.
+**Movies:**
+```
+You: I watched Blade Runner 2049
+You: Rate it S-tier
+```
+Tracks director, year, genre, runtime, poster, and watch history.
+
+**TV Shows:**
+```
+You: I'm watching Severance, 2 seasons in
+You: Finished Breaking Bad, S-tier
+```
+Tracks creator, seasons watched vs total, and show status (watching/completed/dropped).
+
+**Games:**
+```
+You: I'm playing Elden Ring on PC, about 60 hours in
+You: Finished Hades, A-tier
+```
+Tracks developer, platform, hours played, play sessions, and backlog.
 
 ### Daily Briefing
 
@@ -255,6 +285,7 @@ The vault includes a PHP CLI tool at `_scripts/vault-cli/bin/vault` that handles
 ### Read Commands
 
 ```bash
+vault init                  # Validate environment, create DB, rebuild index
 vault briefing              # Daily briefing
 vault todos                 # Open TODOs by priority and due date
 vault search "query"        # Full-text and tag search
@@ -277,6 +308,36 @@ vault books:series "Name"   # Books in a series
 vault books:rating S        # Books with a specific rating
 vault books:recent          # Last 10 reads
 vault books:stats           # Rating breakdowns and re-read stats
+```
+
+### Movie Commands
+
+```bash
+vault movies:list           # All movies by director
+vault movies:director "Name" # Movies by a specific director
+vault movies:rating S       # Movies with a specific rating
+vault movies:recent         # Last 10 watches
+vault movies:stats          # Rating breakdowns and re-watch stats
+```
+
+### TV Commands
+
+```bash
+vault tv:list               # All TV shows by creator
+vault tv:watching           # Currently watching shows
+vault tv:rating S           # TV shows with a specific rating
+vault tv:stats              # Rating breakdowns, watching/completed/dropped
+```
+
+### Game Commands
+
+```bash
+vault games:list            # All games by developer
+vault games:playing         # Currently playing
+vault games:backlog         # Games in the backlog
+vault games:platform "PC"   # Games by platform
+vault games:rating S        # Games with a specific rating
+vault games:stats           # Rating breakdowns, platform stats, total hours
 ```
 
 ### Write Commands

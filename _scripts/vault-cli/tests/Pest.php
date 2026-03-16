@@ -118,6 +118,147 @@ function seedBook(Database $db, array $docOverrides = [], array $bookOverrides =
 }
 
 /**
+ * Seed a movie document + movies table entry.
+ */
+function seedMovie(Database $db, array $docOverrides = [], array $movieOverrides = []): string
+{
+    $docDefaults = [
+        'domain' => 'personal',
+        'subdomain' => 'movies',
+        'title' => 'Test Movie',
+        'summary' => 'A test movie',
+    ];
+
+    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
+
+    $movieDefaults = [
+        'doc_id' => $id,
+        'director' => 'Test Director',
+        'year' => 2024,
+        'genre' => null,
+        'runtime_min' => null,
+        'rating' => 'A',
+        'poster_url' => null,
+        'imdb_id' => null,
+    ];
+
+    $movie = array_merge($movieDefaults, $movieOverrides);
+
+    $db->execute(
+        'INSERT OR REPLACE INTO movies (doc_id, director, year, genre, runtime_min, rating, poster_url, imdb_id)
+         VALUES (:doc_id, :director, :year, :genre, :runtime_min, :rating, :poster_url, :imdb_id)',
+        [
+            ':doc_id' => $movie['doc_id'],
+            ':director' => $movie['director'],
+            ':year' => $movie['year'],
+            ':genre' => $movie['genre'],
+            ':runtime_min' => $movie['runtime_min'],
+            ':rating' => $movie['rating'],
+            ':poster_url' => $movie['poster_url'],
+            ':imdb_id' => $movie['imdb_id'],
+        ],
+    );
+
+    return $id;
+}
+
+/**
+ * Seed a game document + games table entry.
+ */
+function seedGame(Database $db, array $docOverrides = [], array $gameOverrides = []): string
+{
+    $docDefaults = [
+        'domain' => 'personal',
+        'subdomain' => 'games',
+        'title' => 'Test Game',
+        'summary' => 'A test game',
+    ];
+
+    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
+
+    $gameDefaults = [
+        'doc_id' => $id,
+        'developer' => 'Test Studio',
+        'publisher' => null,
+        'year' => 2024,
+        'genre' => null,
+        'platform' => 'PC',
+        'hours_played' => null,
+        'rating' => 'A',
+        'cover_url' => null,
+    ];
+
+    $game = array_merge($gameDefaults, $gameOverrides);
+
+    $db->execute(
+        'INSERT OR REPLACE INTO games (doc_id, developer, publisher, year, genre, platform, hours_played, rating, cover_url)
+         VALUES (:doc_id, :developer, :publisher, :year, :genre, :platform, :hours_played, :rating, :cover_url)',
+        [
+            ':doc_id' => $game['doc_id'],
+            ':developer' => $game['developer'],
+            ':publisher' => $game['publisher'],
+            ':year' => $game['year'],
+            ':genre' => $game['genre'],
+            ':platform' => $game['platform'],
+            ':hours_played' => $game['hours_played'],
+            ':rating' => $game['rating'],
+            ':cover_url' => $game['cover_url'],
+        ],
+    );
+
+    return $id;
+}
+
+/**
+ * Seed a TV show document + tv_shows table entry.
+ */
+function seedTvShow(Database $db, array $docOverrides = [], array $tvOverrides = []): string
+{
+    $docDefaults = [
+        'domain' => 'personal',
+        'subdomain' => 'tv',
+        'title' => 'Test Show',
+        'summary' => 'A test TV show',
+    ];
+
+    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
+
+    $tvDefaults = [
+        'doc_id' => $id,
+        'creator' => 'Test Creator',
+        'year_start' => null,
+        'year_end' => null,
+        'genre' => null,
+        'total_seasons' => null,
+        'seasons_watched' => null,
+        'rating' => null,
+        'poster_url' => null,
+        'imdb_id' => null,
+    ];
+
+    $tv = array_merge($tvDefaults, $tvOverrides);
+
+    $db->execute(
+        'INSERT OR REPLACE INTO tv_shows (doc_id, creator, year_start, year_end, genre, total_seasons, seasons_watched, rating, poster_url, imdb_id)
+         VALUES (:doc_id, :creator, :year_start, :year_end, :genre, :total_seasons, :seasons_watched, :rating, :poster_url, :imdb_id)',
+        [
+            ':doc_id' => $tv['doc_id'],
+            ':creator' => $tv['creator'],
+            ':year_start' => $tv['year_start'],
+            ':year_end' => $tv['year_end'],
+            ':genre' => $tv['genre'],
+            ':total_seasons' => $tv['total_seasons'],
+            ':seasons_watched' => $tv['seasons_watched'],
+            ':rating' => $tv['rating'],
+            ':poster_url' => $tv['poster_url'],
+            ':imdb_id' => $tv['imdb_id'],
+        ],
+    );
+
+    return $id;
+}
+
+/**
  * Run a Symfony Console command and return the output + exit code.
  */
 function runCommand(\Symfony\Component\Console\Command\Command $command, array $input = []): array
