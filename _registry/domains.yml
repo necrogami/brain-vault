@@ -1,0 +1,90 @@
+# Domain & Subdomain Registry
+# ────────────────────────────
+# This is the canonical list of all valid domains and subdomains.
+# Claude MUST verify against this file before creating any document.
+# New entries require explicit user confirmation.
+#
+# Last updated: 2026-03-14
+
+domains:
+  tech:
+    description: "Technology, software, systems, engineering"
+    subdomains:
+      - name: fleeting
+        description: "Quick thoughts, shower ideas, passing observations"
+      - name: projects
+        description: "Longer-term initiatives and builds"
+      - name: research
+        description: "Investigation, learning, comparison"
+      - name: architecture
+        description: "System design, patterns, infrastructure"
+      - name: tools
+        description: "Tools, utilities, workflows"
+      - name: decisions
+        description: "Technical choices and trade-offs"
+      - name: notes
+        description: "General technical notes"
+
+  business:
+    description: "Business ideas, ventures, strategy, operations"
+    subdomains:
+      - name: fleeting
+        description: "Quick business thoughts"
+      - name: decisions
+        description: "Business choices and rationale"
+      - name: strategy
+        description: "Long-term planning and direction"
+      - name: market-research
+        description: "Market analysis, competitors, trends"
+      - name: projects
+        description: "Business initiatives and ventures"
+      - name: finances
+        description: "Financial planning, models, analysis"
+      - name: notes
+        description: "General business notes"
+
+  personal:
+    description: "Personal growth, life, wellness, relationships"
+    subdomains:
+      - name: journal
+        description: "Daily reflections and diary entries"
+      - name: goals
+        description: "Objectives, milestones, aspirations"
+      - name: health
+        description: "Physical and mental wellness"
+      - name: reflections
+        description: "Deeper personal introspection"
+      - name: fleeting
+        description: "Quick personal thoughts"
+      - name: decisions
+        description: "Life choices and reasoning"
+      - name: books
+        description: "Books read — reviews, ratings, series tracking"
+      - name: notes
+        description: "General personal notes"
+
+  creative:
+    description: "Creative projects, art, writing, expression"
+    subdomains:
+      - name: writing
+        description: "Stories, essays, prose, poetry"
+      - name: worldbuilding
+        description: "Fictional worlds, lore, settings"
+      - name: design
+        description: "Visual design, UI/UX concepts"
+      - name: music
+        description: "Musical ideas, compositions, playlists"
+      - name: fleeting
+        description: "Quick creative sparks"
+      - name: projects
+        description: "Creative initiatives and works"
+      - name: notes
+        description: "General creative notes"
+
+  meta:
+    description: "System-level documents, standalone TODOs, vault operations"
+    subdomains:
+      - name: todos
+        description: "Standalone tasks not attached to a specific idea"
+      - name: reviews
+        description: "Weekly/monthly vault reviews and retrospectives"

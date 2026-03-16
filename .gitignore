@@ -1,0 +1,21 @@
+# SQLite temporary files
+*.db-wal
+*.db-shm
+*.db-journal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Composer
+_scripts/vault-cli/vendor/
+
+# SQLite database (derived from vault files)
+_index/vault.db
