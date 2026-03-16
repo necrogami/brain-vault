@@ -103,11 +103,11 @@ Each domain contains subdomains, and documents are stored by date: `vault/{domai
    cd ../..
    ```
 
-3. **Initialize the database:**
+3. **Initialize the vault:**
    ```bash
-   _scripts/vault-cli/bin/vault rebuild
+   _scripts/vault-cli/bin/vault init
    ```
-   This creates `_index/vault.db` from the schema. On a fresh clone it will be empty.
+   This validates your environment (PHP, SQLite, git), creates the database, and rebuilds the index from any existing vault files.
 
 4. **Start a conversation:**
    ```bash

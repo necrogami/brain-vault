@@ -13,9 +13,16 @@ final class Application extends BaseApplication
         parent::__construct('vault', '1.0.0');
 
         $projectRoot = $this->resolveProjectRoot();
-        $db = new Database($projectRoot . '/_index/vault.db');
+        $dbPath = $projectRoot . '/_index/vault.db';
 
-        $this->registerCommands($db, $projectRoot);
+        // Init command always available — it creates the DB
+        $this->addCommand(new Command\InitCommand($projectRoot));
+
+        // All other commands require the DB to exist
+        if (file_exists($dbPath)) {
+            $db = new Database($dbPath);
+            $this->registerCommands($db, $projectRoot);
+        }
     }
 
     private function resolveProjectRoot(): string

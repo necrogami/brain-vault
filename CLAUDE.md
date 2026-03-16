@@ -284,6 +284,7 @@ _scripts/vault-cli/bin/vault <command> [args]
 
 | Command | Description |
 |---|---|
+| `init` | Validate environment, create database if missing, rebuild index |
 | `briefing` | Full daily briefing (overdue, due today, revisit, recent activity, stats) |
 | `todos [--all]` | Open TODOs by priority/due date (`--all` includes done/cancelled) |
 | `search <query>` | Full-text and tag search |
@@ -484,8 +485,8 @@ or condense it. Show it exactly as the CLI prints it:
 ════════════════════════════════════════════════════
 ```
 
-**If the database does not exist yet**, run `_scripts/vault-cli/bin/vault rebuild`
-to initialize it from the vault files.
+**If the database does not exist yet**, run `_scripts/vault-cli/bin/vault init`
+to validate the environment, create the database, and rebuild the index.
 
 **If the CLI is not available**, fall back to inline SQL queries matching the
 briefing format above.

@@ -276,7 +276,7 @@ final class RebuildCommand extends Command
      */
     private function insertBook(array $fm): void
     {
-        if (($fm['domain'] ?? null) !== 'personal' || ($fm['subdomain'] ?? null) !== 'books') {
+        if (($fm['subdomain'] ?? null) !== 'books') {
             return;
         }
 
