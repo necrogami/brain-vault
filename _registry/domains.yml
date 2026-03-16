@@ -40,6 +40,8 @@ domains:
         description: "Business initiatives and ventures"
       - name: finances
         description: "Financial planning, models, analysis"
+      - name: journal
+        description: "Work log, daily standups, day-to-day work entries"
       - name: notes
         description: "General business notes"
 
