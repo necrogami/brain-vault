@@ -130,7 +130,7 @@ todos:
 - `links` use the target document's `id` value
 - `todos` are embedded in the document they relate to
 
-**Book-specific header fields** (added after `summary`, only for `personal/books` documents):
+**Book-specific header fields** (added after `summary`, only for `entertainment/books` documents):
 ```yaml
 author: "Author Name"
 series: null              # series document id (also mirrored in links.parent)
@@ -234,7 +234,7 @@ Use these exact column names when writing SQL — do NOT guess:
 **After every document create/edit/delete**, Claude updates the relevant rows:
 - Parse the document's YAML frontmatter
 - INSERT OR REPLACE into `documents`, `tags`, `links`, `sources`, `todos` tables
-- For `personal/books` documents: also INSERT OR REPLACE into `books` table, and sync `reads` table from the `reads` list in YAML
+- For `entertainment/books` documents: also INSERT OR REPLACE into `books` table, and sync `reads` table from the `reads` list in YAML
 - When deleting: remove from all tables (but remember — we never delete documents,
   only change status)
 

@@ -4,7 +4,7 @@
 # Claude MUST verify against this file before creating any document.
 # New entries require explicit user confirmation.
 #
-# Last updated: 2026-03-14
+# Last updated: 2026-03-16
 
 domains:
   tech:
@@ -60,8 +60,6 @@ domains:
         description: "Quick personal thoughts"
       - name: decisions
         description: "Life choices and reasoning"
-      - name: books
-        description: "Books read — reviews, ratings, series tracking"
       - name: notes
         description: "General personal notes"
 
@@ -82,6 +80,192 @@ domains:
         description: "Creative initiatives and works"
       - name: notes
         description: "General creative notes"
+
+  entertainment:
+    description: "Media consumption, cultural experiences, and leisure"
+    subdomains:
+      - name: books
+        description: "Books read — reviews, ratings, series tracking"
+      - name: movies
+        description: "Films watched, want to watch, reviews"
+      - name: tv
+        description: "Series tracking — watching, completed, dropped"
+      - name: anime
+        description: "Anime and manga tracking"
+      - name: games
+        description: "Video games — playing, completed, backlog"
+      - name: tabletop
+        description: "Board games, TTRPGs, card games"
+      - name: podcasts
+        description: "Podcast tracking and episode notes"
+      - name: theater
+        description: "Plays, musicals, live performances"
+      - name: standup
+        description: "Comedy shows and specials"
+      - name: fleeting
+        description: "Quick entertainment thoughts"
+      - name: notes
+        description: "General entertainment notes"
+
+  music:
+    description: "Listening, discovery, and live experiences"
+    subdomains:
+      - name: concerts
+        description: "Live shows attended and upcoming"
+      - name: albums
+        description: "Album listens, reviews, ratings"
+      - name: discoveries
+        description: "New artists and tracks found"
+      - name: playlists
+        description: "Playlist curation and themes"
+      - name: fleeting
+        description: "Quick music thoughts"
+      - name: notes
+        description: "General music notes"
+
+  travel:
+    description: "Trips, destinations, and experiences"
+    subdomains:
+      - name: trips
+        description: "Past and planned trips"
+      - name: destinations
+        description: "Bucket list places"
+      - name: itineraries
+        description: "Trip planning and schedules"
+      - name: reviews
+        description: "Hotels, airbnbs, attractions"
+      - name: tips
+        description: "Travel hacks and lessons learned"
+      - name: fleeting
+        description: "Quick travel thoughts"
+      - name: notes
+        description: "General travel notes"
+
+  food:
+    description: "Cooking, dining, and drink"
+    subdomains:
+      - name: restaurants
+        description: "Places visited, want to visit, reviews"
+      - name: recipes
+        description: "Recipes tried or want to try"
+      - name: techniques
+        description: "Cooking methods and skills"
+      - name: drinks
+        description: "Wine, beer, spirits, coffee, tea"
+      - name: meal-planning
+        description: "Weekly plans and prep"
+      - name: fleeting
+        description: "Quick food thoughts"
+      - name: notes
+        description: "General food notes"
+
+  fitness:
+    description: "Physical activity, sports, and training"
+    subdomains:
+      - name: workouts
+        description: "Training logs and programs"
+      - name: running
+        description: "Runs, races, training plans"
+      - name: martial-arts
+        description: "Training, techniques, belt progress"
+      - name: sports
+        description: "Watching and playing"
+      - name: yoga
+        description: "Practice logs and poses"
+      - name: fleeting
+        description: "Quick fitness thoughts"
+      - name: notes
+        description: "General fitness notes"
+
+  education:
+    description: "Learning, courses, and skill development"
+    subdomains:
+      - name: courses
+        description: "Online/in-person courses taken or planned"
+      - name: certifications
+        description: "Professional certs, progress, study notes"
+      - name: languages
+        description: "Language learning progress"
+      - name: tutorials
+        description: "Tutorials followed or bookmarked"
+      - name: fleeting
+        description: "Quick learning thoughts"
+      - name: notes
+        description: "General education notes"
+
+  home:
+    description: "Living space, projects, and domestic life"
+    subdomains:
+      - name: improvement
+        description: "Renovation, repairs, upgrades"
+      - name: gardening
+        description: "Plants, landscaping, seasonal planning"
+      - name: diy
+        description: "Crafts and maker projects"
+      - name: organization
+        description: "Decluttering, storage, systems"
+      - name: shopping
+        description: "Wishlists, major purchases, comparisons"
+      - name: pets
+        description: "Pet care, vet visits, milestones"
+      - name: fleeting
+        description: "Quick home thoughts"
+      - name: notes
+        description: "General home notes"
+
+  social:
+    description: "Relationships, events, and community"
+    subdomains:
+      - name: events
+        description: "Gatherings attended or planned"
+      - name: networking
+        description: "Professional connections and follow-ups"
+      - name: gifts
+        description: "Gift ideas for people"
+      - name: family
+        description: "Family notes, milestones, traditions"
+      - name: friendships
+        description: "Friendship notes and catch-up tracking"
+      - name: fleeting
+        description: "Quick social thoughts"
+      - name: notes
+        description: "General social notes"
+
+  hobbies:
+    description: "Recreational pursuits and collections"
+    subdomains:
+      - name: photography
+        description: "Shoots, gear, techniques"
+      - name: collections
+        description: "Things you collect — tracking and wishlists"
+      - name: automotive
+        description: "Cars, motorcycles, mods, maintenance"
+      - name: outdoors
+        description: "Hiking, camping, fishing, hunting"
+      - name: art
+        description: "Drawing, painting, sculpture"
+      - name: fleeting
+        description: "Quick hobby thoughts"
+      - name: notes
+        description: "General hobby notes"
+
+  career:
+    description: "Professional development and growth"
+    subdomains:
+      - name: networking
+        description: "Contacts, conferences, meetups"
+      - name: skills
+        description: "Professional skill development"
+      - name: job-search
+        description: "Opportunities, interviews, applications"
+      - name: mentoring
+        description: "Mentoring given or received"
+      - name: conferences
+        description: "Events attended, talks, takeaways"
+      - name: fleeting
+        description: "Quick career thoughts"
+      - name: notes
+        description: "General career notes"
 
   meta:
     description: "System-level documents, standalone TODOs, vault operations"
