@@ -16,6 +16,3 @@ Thumbs.db
 
 # Composer
 _scripts/vault-cli/vendor/
-
-# SQLite database (derived from vault files)
-_index/vault.db
