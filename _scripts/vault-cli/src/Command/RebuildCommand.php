@@ -107,13 +107,8 @@ final class RebuildCommand extends Command
                 $this->insertDocument($fm, $relativePath);
                 $this->insertTags($fm);
                 $this->insertLinks($fm);
-                $this->insertBook($fm);
-                $this->insertReads($fm);
-                $this->insertMovie($fm);
-                $this->insertWatches($fm);
-                $this->insertTvShow($fm);
-                $this->insertGame($fm);
-                $this->insertPlaySessions($fm);
+                $this->insertMeta($fm);
+                $this->insertMediaEvents($fm);
                 $this->insertSources($fm);
                 $this->insertTodos($fm);
                 $this->insertExternalRefs($fm);
@@ -196,12 +191,15 @@ final class RebuildCommand extends Command
      */
     private function insertDocument(array $fm, string $relativePath): void
     {
+        $meta = $fm['meta'] ?? [];
+        $metaJson = json_encode($meta, JSON_THROW_ON_ERROR);
+
         $this->db->execute(
             <<<'SQL'
                 INSERT OR REPLACE INTO documents
-                    (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date, close_reason)
+                    (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date, close_reason, meta)
                 VALUES
-                    (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date, :close_reason)
+                    (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date, :close_reason, :meta)
             SQL,
             [
                 ':id' => $fm['id'],
@@ -218,6 +216,7 @@ final class RebuildCommand extends Command
                 ':modified_at' => $this->formatDatetime($fm['modified']),
                 ':revisit_date' => $this->formatDatetime($fm['revisit_date']),
                 ':close_reason' => $fm['close_reason'] ?? null,
+                ':meta' => $metaJson,
             ],
         );
     }
@@ -277,212 +276,45 @@ final class RebuildCommand extends Command
     }
 
     /**
+     * Meta is already inserted as part of insertDocument. This method exists
+     * as a no-op placeholder to maintain the insert pipeline structure.
+     *
      * @param array<string, mixed> $fm
      */
-    private function insertBook(array $fm): void
+    private function insertMeta(array $fm): void
     {
-        if (($fm['subdomain'] ?? null) !== 'books') {
-            return;
-        }
-
-        if ($fm['author'] === null) {
-            return;
-        }
-
-        $this->db->execute(
-            <<<'SQL'
-                INSERT OR REPLACE INTO books
-                    (doc_id, author, series_id, series_order, rating, cover_url)
-                VALUES
-                    (:doc_id, :author, :series_id, :series_order, :rating, :cover_url)
-            SQL,
-            [
-                ':doc_id' => $fm['id'],
-                ':author' => $fm['author'],
-                ':series_id' => $fm['series'],
-                ':series_order' => $fm['series_order'],
-                ':rating' => $fm['rating'],
-                ':cover_url' => $fm['cover_url'],
-            ],
-        );
+        // Meta is included in the INSERT INTO documents statement.
+        // This method is kept for pipeline readability.
     }
 
     /**
      * @param array<string, mixed> $fm
      */
-    private function insertReads(array $fm): void
+    private function insertMediaEvents(array $fm): void
     {
-        $reads = $fm['reads'] ?? [];
+        $events = $fm['events'] ?? [];
 
-        if (!is_array($reads) || $reads === []) {
+        if (!is_array($events) || $events === []) {
             return;
         }
 
-        foreach ($reads as $dateRead) {
-            $this->db->execute(
-                'INSERT INTO reads (doc_id, date_read) VALUES (:doc_id, :date_read)',
-                [
-                    ':doc_id' => $fm['id'],
-                    ':date_read' => $this->formatDatetime($dateRead),
-                ],
-            );
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $fm
-     */
-    private function insertMovie(array $fm): void
-    {
-        if (($fm['subdomain'] ?? null) !== 'movies') {
-            return;
-        }
-
-        if ($fm['director'] === null && $fm['imdb_id'] === null) {
-            return;
-        }
-
-        $this->db->execute(
-            <<<'SQL'
-                INSERT OR REPLACE INTO movies
-                    (doc_id, director, year, genre, runtime_min, rating, poster_url, imdb_id)
-                VALUES
-                    (:doc_id, :director, :year, :genre, :runtime_min, :rating, :poster_url, :imdb_id)
-            SQL,
-            [
-                ':doc_id' => $fm['id'],
-                ':director' => $fm['director'],
-                ':year' => $fm['year'],
-                ':genre' => $fm['genre'],
-                ':runtime_min' => $fm['runtime_min'],
-                ':rating' => $fm['rating'],
-                ':poster_url' => $fm['poster_url'],
-                ':imdb_id' => $fm['imdb_id'],
-            ],
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $fm
-     */
-    private function insertWatches(array $fm): void
-    {
-        $watches = $fm['watches'] ?? [];
-
-        if (!is_array($watches) || $watches === []) {
-            return;
-        }
-
-        foreach ($watches as $dateWatched) {
-            $this->db->execute(
-                'INSERT INTO watches (doc_id, date_watched) VALUES (:doc_id, :date_watched)',
-                [
-                    ':doc_id' => $fm['id'],
-                    ':date_watched' => $this->formatDatetime($dateWatched),
-                ],
-            );
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $fm
-     */
-    private function insertTvShow(array $fm): void
-    {
-        if (($fm['subdomain'] ?? null) !== 'tv') {
-            return;
-        }
-
-        if ($fm['creator'] === null && $fm['imdb_id'] === null) {
-            return;
-        }
-
-        $this->db->execute(
-            <<<'SQL'
-                INSERT OR REPLACE INTO tv_shows
-                    (doc_id, creator, year_start, year_end, genre, total_seasons, seasons_watched, rating, poster_url, imdb_id)
-                VALUES
-                    (:doc_id, :creator, :year_start, :year_end, :genre, :total_seasons, :seasons_watched, :rating, :poster_url, :imdb_id)
-            SQL,
-            [
-                ':doc_id' => $fm['id'],
-                ':creator' => $fm['creator'],
-                ':year_start' => $fm['year_start'],
-                ':year_end' => $fm['year_end'],
-                ':genre' => $fm['genre'],
-                ':total_seasons' => $fm['total_seasons'],
-                ':seasons_watched' => $fm['seasons_watched'],
-                ':rating' => $fm['rating'],
-                ':poster_url' => $fm['poster_url'],
-                ':imdb_id' => $fm['imdb_id'],
-            ],
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $fm
-     */
-    private function insertGame(array $fm): void
-    {
-        if (($fm['subdomain'] ?? null) !== 'games') {
-            return;
-        }
-
-        if ($fm['developer'] === null) {
-            return;
-        }
-
-        $this->db->execute(
-            <<<'SQL'
-                INSERT OR REPLACE INTO games
-                    (doc_id, developer, publisher, year, genre, platform, hours_played, rating, cover_url)
-                VALUES
-                    (:doc_id, :developer, :publisher, :year, :genre, :platform, :hours_played, :rating, :cover_url)
-            SQL,
-            [
-                ':doc_id' => $fm['id'],
-                ':developer' => $fm['developer'],
-                ':publisher' => $fm['publisher'],
-                ':year' => $fm['year'],
-                ':genre' => $fm['genre'],
-                ':platform' => $fm['platform'],
-                ':hours_played' => $fm['hours_played'],
-                ':rating' => $fm['rating'],
-                ':cover_url' => $fm['cover_url'],
-            ],
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $fm
-     */
-    private function insertPlaySessions(array $fm): void
-    {
-        $sessions = $fm['play_sessions'] ?? [];
-
-        if (!is_array($sessions) || $sessions === []) {
-            return;
-        }
-
-        foreach ($sessions as $session) {
-            if (is_array($session)) {
-                $this->db->execute(
-                    'INSERT INTO play_sessions (doc_id, date_played, hours) VALUES (:doc_id, :date_played, :hours)',
-                    [
-                        ':doc_id' => $fm['id'],
-                        ':date_played' => $this->formatDatetime($session['date'] ?? null),
-                        ':hours' => $session['hours'] ?? null,
-                    ],
-                );
-            } else {
-                $this->db->execute(
-                    'INSERT INTO play_sessions (doc_id, date_played) VALUES (:doc_id, :date_played)',
-                    [
-                        ':doc_id' => $fm['id'],
-                        ':date_played' => $this->formatDatetime($session),
-                    ],
-                );
+        foreach ($events as $event) {
+            $eventDate = $this->formatDatetime($event['date'] ?? null);
+            if ($eventDate === null) {
+                continue;
             }
+
+            $eventMeta = isset($event['meta']) ? json_encode($event['meta']) : '{}';
+
+            $this->db->execute(
+                'INSERT INTO media_events (doc_id, event_type, event_date, meta) VALUES (:doc_id, :type, :date, :meta)',
+                [
+                    ':doc_id' => $fm['id'],
+                    ':type' => $event['type'],
+                    ':date' => $eventDate,
+                    ':meta' => $eventMeta,
+                ],
+            );
         }
     }
 

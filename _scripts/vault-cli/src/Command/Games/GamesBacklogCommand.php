@@ -23,11 +23,10 @@ final class GamesBacklogCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.platform
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                WHERE d.status IN ('seed', 'tbr')
-                ORDER BY d.created_at DESC
+                SELECT title, meta->>'$.developer' AS developer, meta->>'$.platform' AS platform, status
+                FROM documents
+                WHERE subdomain = 'games' AND status IN ('seed', 'tbr')
+                ORDER BY title
             SQL,
         );
 

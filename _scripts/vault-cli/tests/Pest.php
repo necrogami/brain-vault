@@ -49,13 +49,14 @@ function seedDocument(Database $db, array $overrides = []): string
         'created_at' => '2026-03-15T10:00:00',
         'modified_at' => '2026-03-15T10:00:00',
         'revisit_date' => null,
+        'meta' => '{}',
     ];
 
     $data = array_merge($defaults, $overrides);
 
     $db->execute(
-        'INSERT OR REPLACE INTO documents (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date)
-         VALUES (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date)',
+        'INSERT OR REPLACE INTO documents (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date, meta)
+         VALUES (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date, :meta)',
         [
             ':id' => $data['id'],
             ':title' => $data['title'],
@@ -70,6 +71,7 @@ function seedDocument(Database $db, array $overrides = []): string
             ':created_at' => $data['created_at'],
             ':modified_at' => $data['modified_at'],
             ':revisit_date' => $data['revisit_date'],
+            ':meta' => $data['meta'],
         ],
     );
 
@@ -77,62 +79,35 @@ function seedDocument(Database $db, array $overrides = []): string
 }
 
 /**
- * Seed a book document + books table entry.
+ * Seed a book document with meta JSON.
  */
-function seedBook(Database $db, array $docOverrides = [], array $bookOverrides = []): string
+function seedBook(Database $db, array $docOverrides = [], array $metaOverrides = []): string
 {
-    $docDefaults = [
-        'domain' => 'personal',
-        'subdomain' => 'books',
-        'title' => 'Test Book',
-        'summary' => 'A test book',
-    ];
-
-    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
-
-    $bookDefaults = [
-        'doc_id' => $id,
+    $meta = array_filter(array_merge([
         'author' => 'Test Author',
         'series_id' => null,
         'series_order' => null,
         'rating' => 'A',
         'cover_url' => null,
+    ], $metaOverrides), fn($v) => $v !== null);
+
+    $docDefaults = [
+        'domain' => 'entertainment',
+        'subdomain' => 'books',
+        'title' => 'Test Book',
+        'summary' => 'A test book',
+        'meta' => json_encode($meta, JSON_THROW_ON_ERROR),
     ];
 
-    $book = array_merge($bookDefaults, $bookOverrides);
-
-    $db->execute(
-        'INSERT OR REPLACE INTO books (doc_id, author, series_id, series_order, rating, cover_url)
-         VALUES (:doc_id, :author, :series_id, :series_order, :rating, :cover_url)',
-        [
-            ':doc_id' => $book['doc_id'],
-            ':author' => $book['author'],
-            ':series_id' => $book['series_id'],
-            ':series_order' => $book['series_order'],
-            ':rating' => $book['rating'],
-            ':cover_url' => $book['cover_url'],
-        ],
-    );
-
-    return $id;
+    return seedDocument($db, array_merge($docDefaults, $docOverrides));
 }
 
 /**
- * Seed a movie document + movies table entry.
+ * Seed a movie document with meta JSON.
  */
-function seedMovie(Database $db, array $docOverrides = [], array $movieOverrides = []): string
+function seedMovie(Database $db, array $docOverrides = [], array $metaOverrides = []): string
 {
-    $docDefaults = [
-        'domain' => 'personal',
-        'subdomain' => 'movies',
-        'title' => 'Test Movie',
-        'summary' => 'A test movie',
-    ];
-
-    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
-
-    $movieDefaults = [
-        'doc_id' => $id,
+    $meta = array_filter(array_merge([
         'director' => 'Test Director',
         'year' => 2024,
         'genre' => null,
@@ -140,44 +115,25 @@ function seedMovie(Database $db, array $docOverrides = [], array $movieOverrides
         'rating' => 'A',
         'poster_url' => null,
         'imdb_id' => null,
+    ], $metaOverrides), fn($v) => $v !== null);
+
+    $docDefaults = [
+        'domain' => 'entertainment',
+        'subdomain' => 'movies',
+        'title' => 'Test Movie',
+        'summary' => 'A test movie',
+        'meta' => json_encode($meta, JSON_THROW_ON_ERROR),
     ];
 
-    $movie = array_merge($movieDefaults, $movieOverrides);
-
-    $db->execute(
-        'INSERT OR REPLACE INTO movies (doc_id, director, year, genre, runtime_min, rating, poster_url, imdb_id)
-         VALUES (:doc_id, :director, :year, :genre, :runtime_min, :rating, :poster_url, :imdb_id)',
-        [
-            ':doc_id' => $movie['doc_id'],
-            ':director' => $movie['director'],
-            ':year' => $movie['year'],
-            ':genre' => $movie['genre'],
-            ':runtime_min' => $movie['runtime_min'],
-            ':rating' => $movie['rating'],
-            ':poster_url' => $movie['poster_url'],
-            ':imdb_id' => $movie['imdb_id'],
-        ],
-    );
-
-    return $id;
+    return seedDocument($db, array_merge($docDefaults, $docOverrides));
 }
 
 /**
- * Seed a game document + games table entry.
+ * Seed a game document with meta JSON.
  */
-function seedGame(Database $db, array $docOverrides = [], array $gameOverrides = []): string
+function seedGame(Database $db, array $docOverrides = [], array $metaOverrides = []): string
 {
-    $docDefaults = [
-        'domain' => 'personal',
-        'subdomain' => 'games',
-        'title' => 'Test Game',
-        'summary' => 'A test game',
-    ];
-
-    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
-
-    $gameDefaults = [
-        'doc_id' => $id,
+    $meta = array_filter(array_merge([
         'developer' => 'Test Studio',
         'publisher' => null,
         'year' => 2024,
@@ -186,45 +142,25 @@ function seedGame(Database $db, array $docOverrides = [], array $gameOverrides =
         'hours_played' => null,
         'rating' => 'A',
         'cover_url' => null,
+    ], $metaOverrides), fn($v) => $v !== null);
+
+    $docDefaults = [
+        'domain' => 'entertainment',
+        'subdomain' => 'games',
+        'title' => 'Test Game',
+        'summary' => 'A test game',
+        'meta' => json_encode($meta, JSON_THROW_ON_ERROR),
     ];
 
-    $game = array_merge($gameDefaults, $gameOverrides);
-
-    $db->execute(
-        'INSERT OR REPLACE INTO games (doc_id, developer, publisher, year, genre, platform, hours_played, rating, cover_url)
-         VALUES (:doc_id, :developer, :publisher, :year, :genre, :platform, :hours_played, :rating, :cover_url)',
-        [
-            ':doc_id' => $game['doc_id'],
-            ':developer' => $game['developer'],
-            ':publisher' => $game['publisher'],
-            ':year' => $game['year'],
-            ':genre' => $game['genre'],
-            ':platform' => $game['platform'],
-            ':hours_played' => $game['hours_played'],
-            ':rating' => $game['rating'],
-            ':cover_url' => $game['cover_url'],
-        ],
-    );
-
-    return $id;
+    return seedDocument($db, array_merge($docDefaults, $docOverrides));
 }
 
 /**
- * Seed a TV show document + tv_shows table entry.
+ * Seed a TV show document with meta JSON.
  */
 function seedTvShow(Database $db, array $docOverrides = [], array $tvOverrides = []): string
 {
-    $docDefaults = [
-        'domain' => 'personal',
-        'subdomain' => 'tv',
-        'title' => 'Test Show',
-        'summary' => 'A test TV show',
-    ];
-
-    $id = seedDocument($db, array_merge($docDefaults, $docOverrides));
-
-    $tvDefaults = [
-        'doc_id' => $id,
+    $meta = array_filter(array_merge([
         'creator' => 'Test Creator',
         'year_start' => null,
         'year_end' => null,
@@ -234,28 +170,28 @@ function seedTvShow(Database $db, array $docOverrides = [], array $tvOverrides =
         'rating' => null,
         'poster_url' => null,
         'imdb_id' => null,
+    ], $tvOverrides), fn($v) => $v !== null);
+
+    $docDefaults = [
+        'domain' => 'entertainment',
+        'subdomain' => 'tv',
+        'title' => 'Test Show',
+        'summary' => 'A test TV show',
+        'meta' => json_encode($meta, JSON_THROW_ON_ERROR),
     ];
 
-    $tv = array_merge($tvDefaults, $tvOverrides);
+    return seedDocument($db, array_merge($docDefaults, $docOverrides));
+}
 
+/**
+ * Seed a media event (read, watch, play_session).
+ */
+function seedMediaEvent(Database $db, string $docId, string $type, string $date, array $meta = []): void
+{
     $db->execute(
-        'INSERT OR REPLACE INTO tv_shows (doc_id, creator, year_start, year_end, genre, total_seasons, seasons_watched, rating, poster_url, imdb_id)
-         VALUES (:doc_id, :creator, :year_start, :year_end, :genre, :total_seasons, :seasons_watched, :rating, :poster_url, :imdb_id)',
-        [
-            ':doc_id' => $tv['doc_id'],
-            ':creator' => $tv['creator'],
-            ':year_start' => $tv['year_start'],
-            ':year_end' => $tv['year_end'],
-            ':genre' => $tv['genre'],
-            ':total_seasons' => $tv['total_seasons'],
-            ':seasons_watched' => $tv['seasons_watched'],
-            ':rating' => $tv['rating'],
-            ':poster_url' => $tv['poster_url'],
-            ':imdb_id' => $tv['imdb_id'],
-        ],
+        'INSERT INTO media_events (doc_id, event_type, event_date, meta) VALUES (:doc_id, :type, :date, :meta)',
+        [':doc_id' => $docId, ':type' => $type, ':date' => $date, ':meta' => json_encode($meta)],
     );
-
-    return $id;
 }
 
 /**

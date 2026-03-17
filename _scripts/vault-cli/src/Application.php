@@ -88,17 +88,12 @@ final class Application extends BaseApplication
         $this->addCommand(new Command\Db\UpsertDocCommand($db));
         $this->addCommand(new Command\Db\SetTagsCommand($db));
         $this->addCommand(new Command\Db\AddLinkCommand($db));
-        $this->addCommand(new Command\Db\UpsertBookCommand($db));
-        $this->addCommand(new Command\Db\AddReadCommand($db));
+        $this->addCommand(new Command\Db\UpsertMetaCommand($db));
+        $this->addCommand(new Command\Db\AddEventCommand($db));
         $this->addCommand(new Command\Db\UpdateStatusCommand($db));
         $this->addCommand(new Command\Db\AddSourceCommand($db));
         $this->addCommand(new Command\Db\AddTodoCommand($db));
         $this->addCommand(new Command\Db\AddExternalRefCommand($db));
         $this->addCommand(new Command\Db\CloseDocCommand($db));
-        $this->addCommand(new Command\Db\UpsertMovieCommand($db));
-        $this->addCommand(new Command\Db\AddWatchCommand($db));
-        $this->addCommand(new Command\Db\UpsertTvShowCommand($db));
-        $this->addCommand(new Command\Db\UpsertGameCommand($db));
-        $this->addCommand(new Command\Db\AddPlaySessionCommand($db));
     }
 }

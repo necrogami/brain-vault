@@ -37,8 +37,8 @@ final class GamesStatsCommand extends Command
         $rows = $this->db->fetchAll(
             <<<'SQL'
                 SELECT rating, COUNT(*) AS count
-                FROM games
-                WHERE rating IS NOT NULL
+                FROM documents
+                WHERE subdomain = 'games' AND rating IS NOT NULL
                 GROUP BY rating
                 ORDER BY rating
             SQL,
@@ -67,9 +67,9 @@ final class GamesStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT platform, COUNT(*) AS count
-                FROM games
-                WHERE platform IS NOT NULL
+                SELECT meta->>'$.platform' AS platform, COUNT(*) AS count
+                FROM documents
+                WHERE subdomain = 'games' AND meta->>'$.platform' IS NOT NULL
                 GROUP BY platform
                 ORDER BY count DESC
             SQL,
@@ -98,10 +98,10 @@ final class GamesStatsCommand extends Command
 
         $row = $this->db->fetchOne(
             <<<'SQL'
-                SELECT COALESCE(SUM(hours_played), 0) AS total_hours,
+                SELECT COALESCE(SUM(CAST(meta->>'$.hours_played' AS REAL)), 0) AS total_hours,
                        COUNT(*) AS games_with_hours
-                FROM games
-                WHERE hours_played IS NOT NULL
+                FROM documents
+                WHERE subdomain = 'games' AND meta->>'$.hours_played' IS NOT NULL
             SQL,
         );
 
@@ -125,11 +125,12 @@ final class GamesStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.hours_played
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                WHERE g.hours_played IS NOT NULL AND g.hours_played > 0
-                ORDER BY g.hours_played DESC
+                SELECT title, meta->>'$.developer' AS developer,
+                       CAST(meta->>'$.hours_played' AS REAL) AS hours_played
+                FROM documents
+                WHERE subdomain = 'games' AND meta->>'$.hours_played' IS NOT NULL
+                      AND CAST(meta->>'$.hours_played' AS REAL) > 0
+                ORDER BY hours_played DESC
                 LIMIT 10
             SQL,
         );

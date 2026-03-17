@@ -47,11 +47,10 @@ final class BooksRatingCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, b.author, d.status
-                FROM books b
-                JOIN documents d ON b.doc_id = d.id
-                WHERE UPPER(b.rating) = :tier
-                ORDER BY b.author, d.title
+                SELECT title, meta->>'$.author' AS author, status
+                FROM documents
+                WHERE subdomain = 'books' AND UPPER(rating) = :tier
+                ORDER BY author, title
             SQL,
             [':tier' => $tier],
         );

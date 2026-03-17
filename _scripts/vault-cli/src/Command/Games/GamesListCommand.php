@@ -23,10 +23,11 @@ final class GamesListCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.platform, g.hours_played, g.rating
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                ORDER BY g.developer, d.title
+                SELECT title, meta->>'$.developer' AS developer, meta->>'$.platform' AS platform,
+                       CAST(meta->>'$.hours_played' AS REAL) AS hours_played, rating
+                FROM documents
+                WHERE subdomain = 'games'
+                ORDER BY developer, title
             SQL,
         );
 

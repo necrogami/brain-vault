@@ -23,11 +23,11 @@ final class GamesPlayingCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.platform, g.hours_played
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                WHERE d.status = 'growing'
-                ORDER BY d.modified_at DESC
+                SELECT title, meta->>'$.developer' AS developer, meta->>'$.platform' AS platform,
+                       CAST(meta->>'$.hours_played' AS REAL) AS hours_played
+                FROM documents
+                WHERE subdomain = 'games' AND status = 'growing'
+                ORDER BY title
             SQL,
         );
 

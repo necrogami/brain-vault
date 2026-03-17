@@ -171,14 +171,14 @@ final class MetricsCommand extends Command
         $output->writeln('  BOOKS');
 
         $booksRead = (int) $this->db->fetchValue(
-            'SELECT COUNT(*) FROM reads WHERE date_read >= :cutoff',
+            "SELECT COUNT(*) FROM media_events WHERE event_type = 'read' AND event_date >= :cutoff",
             [':cutoff' => $cutoff],
         );
 
         $output->writeln("  Books read in period: {$booksRead}");
 
         $ratings = $this->db->fetchAll(
-            'SELECT b.rating, COUNT(*) as count FROM reads r JOIN books b ON r.doc_id = b.doc_id WHERE r.date_read >= :cutoff AND b.rating IS NOT NULL GROUP BY b.rating ORDER BY b.rating',
+            "SELECT d.rating, COUNT(*) as count FROM media_events me JOIN documents d ON me.doc_id = d.id WHERE me.event_type = 'read' AND me.event_date >= :cutoff AND d.rating IS NOT NULL GROUP BY d.rating ORDER BY d.rating",
             [':cutoff' => $cutoff],
         );
 

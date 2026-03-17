@@ -47,13 +47,12 @@ final class GamesRatingCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.platform, d.status
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                WHERE UPPER(g.rating) = :tier
-                ORDER BY g.developer, d.title
+                SELECT title, meta->>'$.developer' AS developer, meta->>'$.platform' AS platform, status
+                FROM documents
+                WHERE subdomain = 'games' AND rating = :rating
+                ORDER BY developer, title
             SQL,
-            [':tier' => $tier],
+            [':rating' => $tier],
         );
 
         if ($rows === []) {

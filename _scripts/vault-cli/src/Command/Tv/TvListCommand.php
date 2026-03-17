@@ -23,11 +23,12 @@ final class TvListCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, t.creator, t.year_start, t.seasons_watched,
-                       t.total_seasons, t.rating
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                ORDER BY t.year_start DESC, d.title
+                SELECT title, meta->>'$.creator' AS creator, rating,
+                       CAST(meta->>'$.seasons_watched' AS INTEGER) AS seasons_watched,
+                       CAST(meta->>'$.total_seasons' AS INTEGER) AS total_seasons
+                FROM documents
+                WHERE subdomain = 'tv'
+                ORDER BY creator, title
             SQL,
         );
 
@@ -38,7 +39,7 @@ final class TvListCommand extends Command
         }
 
         $table = new Table($output);
-        $table->setHeaders(['Title', 'Creator', 'Year', 'Progress', 'Rating']);
+        $table->setHeaders(['Title', 'Creator', 'Progress', 'Rating']);
 
         foreach ($rows as $row) {
             $watched = $row['seasons_watched'] !== null ? (string) $row['seasons_watched'] : '?';
@@ -47,7 +48,6 @@ final class TvListCommand extends Command
             $table->addRow([
                 $row['title'],
                 $row['creator'] ?? '',
-                $row['year_start'] !== null ? (string) $row['year_start'] : '',
                 "{$watched}/{$total}",
                 $row['rating'] ?? '',
             ]);

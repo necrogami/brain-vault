@@ -18,19 +18,19 @@ it('lists books in a series ordered by series_order', function (): void {
     // Seed books in the series (intentionally out of order to verify ordering)
     seedBook($db, ['title' => 'Dune Messiah', 'id' => 'book-dm'], [
         'author' => 'Frank Herbert',
-        'series_id' => $seriesId,
+        'series' => $seriesId,
         'series_order' => 2,
         'rating' => 'A',
     ]);
     seedBook($db, ['title' => 'Dune', 'id' => 'book-dune'], [
         'author' => 'Frank Herbert',
-        'series_id' => $seriesId,
+        'series' => $seriesId,
         'series_order' => 1,
         'rating' => 'S',
     ]);
     seedBook($db, ['title' => 'Children of Dune', 'id' => 'book-cod'], [
         'author' => 'Frank Herbert',
-        'series_id' => $seriesId,
+        'series' => $seriesId,
         'series_order' => 3,
         'rating' => 'B',
     ]);
@@ -60,7 +60,7 @@ it('shows no results for unknown series', function (): void {
 
     seedBook($db, ['title' => 'Dune', 'id' => 'book-dune'], [
         'author' => 'Frank Herbert',
-        'series_id' => $seriesId,
+        'series' => $seriesId,
         'series_order' => 1,
     ]);
 

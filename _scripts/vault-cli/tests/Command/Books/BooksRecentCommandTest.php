@@ -10,8 +10,8 @@ it('shows recently read books', function (): void {
     $id1 = seedBook($db, ['title' => 'Dune', 'id' => 'book-dune'], ['author' => 'Frank Herbert', 'rating' => 'S']);
     $id2 = seedBook($db, ['title' => 'Neuromancer', 'id' => 'book-neuro'], ['author' => 'William Gibson', 'rating' => 'A']);
 
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-10']);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-03-12']);
+    seedMediaEvent($db, $id1, 'read', '2026-03-10');
+    seedMediaEvent($db, $id2, 'read', '2026-03-12');
 
     $result = runCommand(new BooksRecentCommand($db));
 
@@ -30,9 +30,9 @@ it('respects limit argument', function (): void {
     $id2 = seedBook($db, ['title' => 'Book Two', 'id' => 'book-two'], ['author' => 'Author B', 'rating' => 'B']);
     $id3 = seedBook($db, ['title' => 'Book Three', 'id' => 'book-three'], ['author' => 'Author C', 'rating' => 'C']);
 
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-01']);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-03-05']);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id3, ':date' => '2026-03-10']);
+    seedMediaEvent($db, $id1, 'read', '2026-03-01');
+    seedMediaEvent($db, $id2, 'read', '2026-03-05');
+    seedMediaEvent($db, $id3, 'read', '2026-03-10');
 
     $result = runCommand(new BooksRecentCommand($db), ['n' => '2']);
 

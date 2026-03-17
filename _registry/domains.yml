@@ -4,7 +4,7 @@
 # Claude MUST verify against this file before creating any document.
 # New entries require explicit user confirmation.
 #
-# Last updated: 2026-03-16
+# Last updated: 2026-03-17
 
 domains:
   tech:
@@ -22,6 +22,8 @@ domains:
         description: "Tools, utilities, workflows"
       - name: decisions
         description: "Technical choices and trade-offs"
+      - name: bugs
+        description: "Bug reports, investigations, and fixes"
       - name: notes
         description: "General technical notes"
 

@@ -47,13 +47,12 @@ final class TvRatingCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, t.creator, t.year_start, d.status
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                WHERE UPPER(t.rating) = :tier
-                ORDER BY t.year_start DESC, d.title
+                SELECT title, meta->>'$.creator' AS creator, status
+                FROM documents
+                WHERE subdomain = 'tv' AND rating = :rating
+                ORDER BY meta->>'$.creator', title
             SQL,
-            [':tier' => $tier],
+            [':rating' => $tier],
         );
 
         if ($rows === []) {
@@ -63,13 +62,12 @@ final class TvRatingCommand extends Command
         }
 
         $table = new Table($output);
-        $table->setHeaders(['Title', 'Creator', 'Year', 'Status']);
+        $table->setHeaders(['Title', 'Creator', 'Status']);
 
         foreach ($rows as $row) {
             $table->addRow([
                 $row['title'],
                 $row['creator'] ?? '',
-                $row['year_start'] !== null ? (string) $row['year_start'] : '',
                 $row['status'],
             ]);
         }

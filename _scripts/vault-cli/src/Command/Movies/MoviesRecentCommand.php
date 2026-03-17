@@ -37,11 +37,12 @@ final class MoviesRecentCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, m.director, m.rating, w.date_watched
-                FROM watches w
-                JOIN movies m ON w.doc_id = m.doc_id
-                JOIN documents d ON w.doc_id = d.id
-                ORDER BY w.date_watched DESC
+                SELECT d.title, d.meta->>'$.director' AS director,
+                       d.rating, me.event_date AS date_watched
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'watch'
+                ORDER BY me.event_date DESC
                 LIMIT :limit
             SQL,
             [':limit' => $limit],

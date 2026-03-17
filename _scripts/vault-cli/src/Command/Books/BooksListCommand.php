@@ -23,10 +23,11 @@ final class BooksListCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, b.author, b.rating, d.status, b.series_order
-                FROM books b
-                JOIN documents d ON b.doc_id = d.id
-                ORDER BY b.author, b.series_order
+                SELECT title, meta->>'$.author' AS author, rating, status,
+                       CAST(meta->>'$.series_order' AS REAL) AS series_order
+                FROM documents
+                WHERE subdomain = 'books' AND COALESCE(meta->>'$.type', 'book') != 'series'
+                ORDER BY author, series_order
             SQL,
         );
 

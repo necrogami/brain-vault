@@ -58,16 +58,11 @@ it('registers all expected commands', function (): void {
     expect($commands)->toHaveKey('db:upsert-doc')
         ->toHaveKey('db:set-tags')
         ->toHaveKey('db:add-link')
-        ->toHaveKey('db:upsert-book')
-        ->toHaveKey('db:add-read')
+        ->toHaveKey('db:upsert-meta')
+        ->toHaveKey('db:add-event')
         ->toHaveKey('db:update-status')
         ->toHaveKey('db:add-source')
-        ->toHaveKey('db:add-todo')
-        ->toHaveKey('db:upsert-movie')
-        ->toHaveKey('db:add-watch')
-        ->toHaveKey('db:upsert-tv')
-        ->toHaveKey('db:upsert-game')
-        ->toHaveKey('db:add-play-session');
+        ->toHaveKey('db:add-todo');
 });
 
 it('can run the list command', function (): void {

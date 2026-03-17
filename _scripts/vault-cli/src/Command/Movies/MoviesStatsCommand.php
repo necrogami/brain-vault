@@ -36,8 +36,9 @@ final class MoviesStatsCommand extends Command
         $rows = $this->db->fetchAll(
             <<<'SQL'
                 SELECT rating, COUNT(*) AS count
-                FROM movies
-                WHERE rating IS NOT NULL
+                FROM documents
+                WHERE subdomain = 'movies'
+                  AND rating IS NOT NULL
                 GROUP BY rating
                 ORDER BY rating
             SQL,
@@ -68,12 +69,13 @@ final class MoviesStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT m.rating, COUNT(*) AS count
-                FROM watches w
-                JOIN movies m ON w.doc_id = m.doc_id
-                WHERE w.date_watched >= :year_start
-                GROUP BY m.rating
-                ORDER BY m.rating
+                SELECT d.rating, COUNT(*) AS count
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'watch'
+                  AND me.event_date >= :year_start
+                GROUP BY d.rating
+                ORDER BY d.rating
             SQL,
             [':year_start' => $yearStart],
         );
@@ -106,11 +108,12 @@ final class MoviesStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, m.director, COUNT(*) AS times_watched
-                FROM watches w
-                JOIN movies m ON w.doc_id = m.doc_id
-                JOIN documents d ON w.doc_id = d.id
-                GROUP BY w.doc_id
+                SELECT d.title, d.meta->>'$.director' AS director,
+                       COUNT(*) AS times_watched
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'watch'
+                GROUP BY me.doc_id
                 HAVING COUNT(*) > 1
                 ORDER BY times_watched DESC
             SQL,

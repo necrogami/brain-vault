@@ -35,8 +35,8 @@ final class TvStatsCommand extends Command
         $rows = $this->db->fetchAll(
             <<<'SQL'
                 SELECT rating, COUNT(*) AS count
-                FROM tv_shows
-                WHERE rating IS NOT NULL
+                FROM documents
+                WHERE subdomain = 'tv' AND rating IS NOT NULL
                 GROUP BY rating
                 ORDER BY rating
             SQL,
@@ -66,33 +66,32 @@ final class TvStatsCommand extends Command
         $watching = $this->db->fetchValue(
             <<<'SQL'
                 SELECT COUNT(*)
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                WHERE d.status = 'growing'
+                FROM documents
+                WHERE subdomain = 'tv' AND status = 'growing'
             SQL,
         );
 
         $completed = $this->db->fetchValue(
             <<<'SQL'
                 SELECT COUNT(*)
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                WHERE d.status = 'mature'
+                FROM documents
+                WHERE subdomain = 'tv' AND status = 'mature'
             SQL,
         );
 
         $dropped = $this->db->fetchValue(
             <<<'SQL'
                 SELECT COUNT(*)
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                WHERE d.status = 'closed'
+                FROM documents
+                WHERE subdomain = 'tv' AND status = 'closed'
             SQL,
         );
 
         $total = $this->db->fetchValue(
             <<<'SQL'
-                SELECT COUNT(*) FROM tv_shows
+                SELECT COUNT(*)
+                FROM documents
+                WHERE subdomain = 'tv'
             SQL,
         );
 

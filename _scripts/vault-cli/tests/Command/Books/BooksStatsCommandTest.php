@@ -28,8 +28,8 @@ it('shows this year stats', function (): void {
     $id2 = seedBook($db, ['title' => 'Book Two', 'id' => 'book-two'], ['rating' => 'B']);
 
     $currentYear = date('Y');
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => "{$currentYear}-02-15"]);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id2, ':date' => "{$currentYear}-03-01"]);
+    seedMediaEvent($db, $id1, 'read', "{$currentYear}-02-15");
+    seedMediaEvent($db, $id2, 'read', "{$currentYear}-03-01");
 
     $result = runCommand(new BooksStatsCommand($db));
 
@@ -45,12 +45,12 @@ it('shows most re-read books', function (): void {
     $id2 = seedBook($db, ['title' => 'Neuromancer', 'id' => 'book-neuro'], ['author' => 'William Gibson', 'rating' => 'A']);
 
     // Dune read 3 times
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => '2024-01-10']);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => '2025-06-15']);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-01']);
+    seedMediaEvent($db, $id1, 'read', '2024-01-10');
+    seedMediaEvent($db, $id1, 'read', '2025-06-15');
+    seedMediaEvent($db, $id1, 'read', '2026-03-01');
 
     // Neuromancer read only once (should not appear in re-read list)
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-02-20']);
+    seedMediaEvent($db, $id2, 'read', '2026-02-20');
 
     $result = runCommand(new BooksStatsCommand($db));
 

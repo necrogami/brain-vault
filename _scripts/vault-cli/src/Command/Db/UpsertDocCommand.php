@@ -35,7 +35,8 @@ final class UpsertDocCommand extends Command
             ->addOption('effort', null, InputOption::VALUE_REQUIRED, 'Effort estimate')
             ->addOption('summary', null, InputOption::VALUE_REQUIRED, 'One-line summary')
             ->addOption('revisit-date', null, InputOption::VALUE_REQUIRED, 'Date to revisit')
-            ->addOption('close-reason', null, InputOption::VALUE_REQUIRED, 'Reason for closing');
+            ->addOption('close-reason', null, InputOption::VALUE_REQUIRED, 'Reason for closing')
+            ->addOption('meta', null, InputOption::VALUE_REQUIRED, 'Entity-specific JSON metadata', '{}');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -45,9 +46,9 @@ final class UpsertDocCommand extends Command
         $this->db->execute(
             <<<'SQL'
                 INSERT OR REPLACE INTO documents
-                    (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date, close_reason)
+                    (id, title, domain, subdomain, status, priority, confidence, effort, summary, file_path, created_at, modified_at, revisit_date, close_reason, meta)
                 VALUES
-                    (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date, :close_reason)
+                    (:id, :title, :domain, :subdomain, :status, :priority, :confidence, :effort, :summary, :file_path, :created_at, :modified_at, :revisit_date, :close_reason, :meta)
             SQL,
             [
                 ':id' => $id,
@@ -64,6 +65,7 @@ final class UpsertDocCommand extends Command
                 ':modified_at' => $input->getOption('modified'),
                 ':revisit_date' => $input->getOption('revisit-date'),
                 ':close_reason' => $input->getOption('close-reason'),
+                ':meta' => $input->getOption('meta'),
             ],
         );
 

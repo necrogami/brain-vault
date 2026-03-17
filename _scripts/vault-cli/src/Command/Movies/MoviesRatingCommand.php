@@ -47,13 +47,14 @@ final class MoviesRatingCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, m.director, m.year, d.status
-                FROM movies m
-                JOIN documents d ON m.doc_id = d.id
-                WHERE UPPER(m.rating) = :tier
-                ORDER BY m.year DESC, d.title
+                SELECT title, meta->>'$.director' AS director,
+                       CAST(meta->>'$.year' AS INTEGER) AS year, status
+                FROM documents
+                WHERE subdomain = 'movies'
+                  AND rating = :rating
+                ORDER BY director, title
             SQL,
-            [':tier' => $tier],
+            [':rating' => $tier],
         );
 
         if ($rows === []) {

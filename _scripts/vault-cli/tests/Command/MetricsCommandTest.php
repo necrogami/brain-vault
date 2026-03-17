@@ -45,7 +45,7 @@ it('shows domain breakdown', function (): void {
 it('shows book stats in period', function (): void {
     $db = freshDb();
     $id = seedBook($db, ['created_at' => date('Y-m-d\TH:i:s')]);
-    $db->execute('INSERT INTO reads (doc_id, date_read) VALUES (:id, :date)', [':id' => $id, ':date' => date('Y-m-d')]);
+    seedMediaEvent($db, $id, 'read', date('Y-m-d'));
     $result = runCommand(new MetricsCommand($db));
     expect($result['output'])->toContain('BOOKS');
 });

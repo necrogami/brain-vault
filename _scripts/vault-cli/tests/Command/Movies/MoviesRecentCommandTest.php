@@ -10,8 +10,8 @@ it('shows recently watched movies', function (): void {
     $id1 = seedMovie($db, ['title' => 'Blade Runner', 'id' => 'movie-br'], ['director' => 'Ridley Scott', 'rating' => 'S']);
     $id2 = seedMovie($db, ['title' => 'The Matrix', 'id' => 'movie-matrix'], ['director' => 'Wachowskis', 'rating' => 'A']);
 
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-10']);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-03-12']);
+    seedMediaEvent($db, $id1, 'watch', '2026-03-10');
+    seedMediaEvent($db, $id2, 'watch', '2026-03-12');
 
     $result = runCommand(new MoviesRecentCommand($db));
 
@@ -30,9 +30,9 @@ it('respects limit argument', function (): void {
     $id2 = seedMovie($db, ['title' => 'Movie Two', 'id' => 'movie-two'], ['director' => 'Director B', 'rating' => 'B']);
     $id3 = seedMovie($db, ['title' => 'Movie Three', 'id' => 'movie-three'], ['director' => 'Director C', 'rating' => 'C']);
 
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-01']);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-03-05']);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id3, ':date' => '2026-03-10']);
+    seedMediaEvent($db, $id1, 'watch', '2026-03-01');
+    seedMediaEvent($db, $id2, 'watch', '2026-03-05');
+    seedMediaEvent($db, $id3, 'watch', '2026-03-10');
 
     $result = runCommand(new MoviesRecentCommand($db), ['n' => '2']);
 

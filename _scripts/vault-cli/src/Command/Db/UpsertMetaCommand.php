@@ -11,8 +11,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Vault\Database;
 
-#[AsCommand(name: 'db:add-read', description: 'Log a read date for a book')]
-final class AddReadCommand extends Command
+#[AsCommand(name: 'db:upsert-meta', description: 'Update entity-specific metadata (JSON) on a document')]
+final class UpsertMetaCommand extends Command
 {
     public function __construct(private readonly Database $db)
     {
@@ -22,24 +22,21 @@ final class AddReadCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('id', null, InputOption::VALUE_REQUIRED, 'Document ID for the book')
-            ->addOption('date', null, InputOption::VALUE_REQUIRED, 'Date the book was read (YYYY-MM-DD)');
+            ->addOption('id', null, InputOption::VALUE_REQUIRED, 'Document ID')
+            ->addOption('json', null, InputOption::VALUE_REQUIRED, 'JSON object to merge into meta');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $id = $input->getOption('id');
-        $date = $input->getOption('date');
+        $json = $input->getOption('json');
 
         $this->db->execute(
-            'INSERT INTO reads (doc_id, date_read) VALUES (:doc_id, :date_read)',
-            [
-                ':doc_id' => $id,
-                ':date_read' => $date,
-            ],
+            "UPDATE documents SET meta = json_patch(meta, :json) WHERE id = :id",
+            [':id' => $id, ':json' => $json],
         );
 
-        $output->writeln("ok: logged read for '{$id}' on {$date}");
+        $output->writeln("ok: updated meta on '{$id}'");
 
         return Command::SUCCESS;
     }

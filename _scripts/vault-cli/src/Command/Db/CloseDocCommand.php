@@ -57,6 +57,11 @@ final class CloseDocCommand extends Command
             ],
         );
 
+        $this->db->execute(
+            "UPDATE todos SET status = 'cancelled' WHERE doc_id = :id AND status = 'open'",
+            [':id' => $id],
+        );
+
         $output->writeln("ok: '{$id}' → {$status} (reason: {$reason})");
 
         return Command::SUCCESS;

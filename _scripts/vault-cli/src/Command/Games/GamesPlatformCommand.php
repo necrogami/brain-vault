@@ -32,13 +32,13 @@ final class GamesPlatformCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, g.developer, g.hours_played, g.rating
-                FROM games g
-                JOIN documents d ON g.doc_id = d.id
-                WHERE g.platform LIKE :pattern
-                ORDER BY g.developer, d.title
+                SELECT title, meta->>'$.developer' AS developer, meta->>'$.platform' AS platform,
+                       CAST(meta->>'$.hours_played' AS REAL) AS hours_played, rating, status
+                FROM documents
+                WHERE subdomain = 'games' AND meta->>'$.platform' LIKE :platform
+                ORDER BY developer, title
             SQL,
-            [':pattern' => $pattern],
+            [':platform' => $pattern],
         );
 
         if ($rows === []) {

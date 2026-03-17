@@ -23,10 +23,12 @@ final class MoviesListCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, m.director, m.year, m.rating, d.status
-                FROM movies m
-                JOIN documents d ON m.doc_id = d.id
-                ORDER BY m.year DESC, d.title
+                SELECT title, meta->>'$.director' AS director,
+                       CAST(meta->>'$.year' AS INTEGER) AS year,
+                       rating, status
+                FROM documents
+                WHERE subdomain = 'movies'
+                ORDER BY director, title
             SQL,
         );
 

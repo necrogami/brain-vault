@@ -36,8 +36,8 @@ final class BooksStatsCommand extends Command
         $rows = $this->db->fetchAll(
             <<<'SQL'
                 SELECT rating, COUNT(*) AS count
-                FROM books
-                WHERE rating IS NOT NULL
+                FROM documents
+                WHERE subdomain = 'books' AND rating IS NOT NULL AND COALESCE(meta->>'$.type', 'book') != 'series'
                 GROUP BY rating
                 ORDER BY rating
             SQL,
@@ -68,12 +68,12 @@ final class BooksStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT b.rating, COUNT(*) AS count
-                FROM reads r
-                JOIN books b ON r.doc_id = b.doc_id
-                WHERE r.date_read >= :year_start
-                GROUP BY b.rating
-                ORDER BY b.rating
+                SELECT d.rating, COUNT(*) AS count
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'read' AND me.event_date >= :year_start
+                GROUP BY d.rating
+                ORDER BY d.rating
             SQL,
             [':year_start' => $yearStart],
         );
@@ -106,11 +106,11 @@ final class BooksStatsCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, b.author, COUNT(*) AS times_read
-                FROM reads r
-                JOIN books b ON r.doc_id = b.doc_id
-                JOIN documents d ON r.doc_id = d.id
-                GROUP BY r.doc_id
+                SELECT d.title, d.meta->>'$.author' AS author, COUNT(*) AS times_read
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'read'
+                GROUP BY me.doc_id
                 HAVING COUNT(*) > 1
                 ORDER BY times_read DESC
             SQL,

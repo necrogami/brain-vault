@@ -28,8 +28,8 @@ it('shows this year stats', function (): void {
     $id2 = seedMovie($db, ['title' => 'Movie Two', 'id' => 'movie-two'], ['rating' => 'B']);
 
     $currentYear = date('Y');
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => "{$currentYear}-02-15"]);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id2, ':date' => "{$currentYear}-03-01"]);
+    seedMediaEvent($db, $id1, 'watch', "{$currentYear}-02-15");
+    seedMediaEvent($db, $id2, 'watch', "{$currentYear}-03-01");
 
     $result = runCommand(new MoviesStatsCommand($db));
 
@@ -45,12 +45,12 @@ it('shows most re-watched movies', function (): void {
     $id2 = seedMovie($db, ['title' => 'The Matrix', 'id' => 'movie-matrix'], ['director' => 'Wachowskis', 'rating' => 'A']);
 
     // Blade Runner watched 3 times
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => '2024-01-10']);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => '2025-06-15']);
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id1, ':date' => '2026-03-01']);
+    seedMediaEvent($db, $id1, 'watch', '2024-01-10');
+    seedMediaEvent($db, $id1, 'watch', '2025-06-15');
+    seedMediaEvent($db, $id1, 'watch', '2026-03-01');
 
     // The Matrix watched only once (should not appear in re-watched list)
-    $db->execute('INSERT INTO watches (doc_id, date_watched) VALUES (:id, :date)', [':id' => $id2, ':date' => '2026-02-20']);
+    seedMediaEvent($db, $id2, 'watch', '2026-02-20');
 
     $result = runCommand(new MoviesStatsCommand($db));
 

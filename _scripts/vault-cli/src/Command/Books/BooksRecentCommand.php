@@ -37,11 +37,12 @@ final class BooksRecentCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, b.author, b.rating, r.date_read
-                FROM reads r
-                JOIN books b ON r.doc_id = b.doc_id
-                JOIN documents d ON r.doc_id = d.id
-                ORDER BY r.date_read DESC
+                SELECT d.title, d.meta->>'$.author' AS author, d.rating,
+                       me.event_date AS date_read
+                FROM media_events me
+                JOIN documents d ON me.doc_id = d.id
+                WHERE me.event_type = 'read'
+                ORDER BY me.event_date DESC
                 LIMIT :limit
             SQL,
             [':limit' => $limit],

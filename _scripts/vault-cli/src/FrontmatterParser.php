@@ -9,6 +9,22 @@ use Symfony\Component\Yaml\Yaml;
 final class FrontmatterParser
 {
     /**
+     * Entity-specific field names collected into meta for backward compatibility
+     * with flat YAML format.
+     */
+    private const array ENTITY_FIELDS = [
+        // Book
+        'author', 'series', 'series_order', 'rating', 'cover_url',
+        'serial', 'platform', 'serial_url', 'current_chapter', 'chapters_available',
+        // Movie
+        'director', 'year', 'genre', 'runtime_min', 'poster_url', 'imdb_id',
+        // TV
+        'creator', 'year_start', 'year_end', 'total_seasons', 'seasons_watched',
+        // Game
+        'developer', 'publisher', 'hours_played',
+    ];
+
+    /**
      * Parse YAML frontmatter from a markdown file.
      *
      * @return array{frontmatter: array<string, mixed>, body: string}|null
@@ -45,7 +61,7 @@ final class FrontmatterParser
      */
     private function normalize(array $data): array
     {
-        return [
+        $core = [
             'id' => $data['id'] ?? null,
             'title' => $data['title'] ?? null,
             'domain' => $data['domain'] ?? null,
@@ -62,36 +78,48 @@ final class FrontmatterParser
             'links' => $data['links'] ?? [],
             'sources' => $data['sources'] ?? [],
             'todos' => $data['todos'] ?? [],
-            // Book-specific
-            'author' => $data['author'] ?? null,
-            'series' => $data['series'] ?? null,
-            'series_order' => $data['series_order'] ?? null,
-            'rating' => $data['rating'] ?? null,
-            'cover_url' => $data['cover_url'] ?? null,
-            'reads' => $data['reads'] ?? [],
-            // Movie-specific
-            'director' => $data['director'] ?? null,
-            'year' => $data['year'] ?? null,
-            'genre' => $data['genre'] ?? null,
-            'runtime_min' => $data['runtime_min'] ?? null,
-            'poster_url' => $data['poster_url'] ?? null,
-            'imdb_id' => $data['imdb_id'] ?? null,
-            'watches' => $data['watches'] ?? [],
-            // TV-specific
-            'creator' => $data['creator'] ?? null,
-            'year_start' => $data['year_start'] ?? null,
-            'year_end' => $data['year_end'] ?? null,
-            'total_seasons' => $data['total_seasons'] ?? null,
-            'seasons_watched' => $data['seasons_watched'] ?? null,
-            // Game-specific
-            'developer' => $data['developer'] ?? null,
-            'publisher' => $data['publisher'] ?? null,
-            'platform' => $data['platform'] ?? null,
-            'hours_played' => $data['hours_played'] ?? null,
-            'play_sessions' => $data['play_sessions'] ?? [],
-            // Close/completion tracking
             'close_reason' => $data['close_reason'] ?? null,
             'external_refs' => $data['external_refs'] ?? [],
         ];
+
+        // Meta: use meta key if present, otherwise collect flat entity fields
+        if (isset($data['meta']) && is_array($data['meta'])) {
+            $core['meta'] = $data['meta'];
+        } else {
+            $meta = [];
+            foreach (self::ENTITY_FIELDS as $field) {
+                if (array_key_exists($field, $data) && $data[$field] !== null) {
+                    $meta[$field] = $data[$field];
+                }
+            }
+            $core['meta'] = $meta;
+        }
+
+        // Events: normalize reads/watches/play_sessions into unified list
+        $events = [];
+        foreach ($data['reads'] ?? [] as $date) {
+            $events[] = ['type' => 'read', 'date' => $date];
+        }
+        foreach ($data['watches'] ?? [] as $date) {
+            $events[] = ['type' => 'watch', 'date' => $date];
+        }
+        foreach ($data['play_sessions'] ?? [] as $session) {
+            if (is_array($session)) {
+                $event = ['type' => 'play_session', 'date' => $session['date'] ?? null];
+                if (isset($session['hours'])) {
+                    $event['meta'] = ['hours' => $session['hours']];
+                }
+                $events[] = $event;
+            } else {
+                $events[] = ['type' => 'play_session', 'date' => $session];
+            }
+        }
+        // Also support new format: events key directly
+        foreach ($data['events'] ?? [] as $event) {
+            $events[] = $event;
+        }
+        $core['events'] = $events;
+
+        return $core;
     }
 }

@@ -32,13 +32,14 @@ final class MoviesDirectorCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, m.year, m.rating, d.status
-                FROM movies m
-                JOIN documents d ON m.doc_id = d.id
-                WHERE m.director LIKE :pattern
-                ORDER BY m.year DESC, d.title
+                SELECT title, meta->>'$.director' AS director,
+                       CAST(meta->>'$.year' AS INTEGER) AS year, rating, status
+                FROM documents
+                WHERE subdomain = 'movies'
+                  AND meta->>'$.director' LIKE :name
+                ORDER BY director, title
             SQL,
-            [':pattern' => $pattern],
+            [':name' => $pattern],
         );
 
         if ($rows === []) {

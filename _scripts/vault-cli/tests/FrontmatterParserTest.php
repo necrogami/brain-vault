@@ -57,6 +57,8 @@ MD);
         ->and($result['frontmatter']['links']['related'])->toBe(['other-doc'])
         ->and($result['frontmatter']['sources'])->toHaveCount(1)
         ->and($result['frontmatter']['todos'])->toHaveCount(1)
+        ->and($result['frontmatter']['meta'])->toBe([])
+        ->and($result['frontmatter']['events'])->toBe([])
         ->and($result['body'])->toContain('Body content goes here.');
 });
 
@@ -106,74 +108,148 @@ MD);
         ->and($result['frontmatter']['tags'])->toBe([])
         ->and($result['frontmatter']['links'])->toBe([])
         ->and($result['frontmatter']['sources'])->toBe([])
-        ->and($result['frontmatter']['todos'])->toBe([]);
+        ->and($result['frontmatter']['todos'])->toBe([])
+        ->and($result['frontmatter']['meta'])->toBe([])
+        ->and($result['frontmatter']['events'])->toBe([]);
 });
 
-it('handles book-specific fields', function (): void {
+it('parses meta key from YAML directly', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
     register_shutdown_function(fn () => @unlink($file));
 
     file_put_contents($file, <<<'MD'
 ---
-id: "20260315-book-test"
-title: "A Great Book"
-domain: personal
+id: "20260317-meta-test"
+title: "Meta Test"
+domain: entertainment
 subdomain: books
-author: "Jane Author"
-rating: A
-reads:
-  - date: 2026-01-15
-  - date: 2026-03-10
-series: "The Series Name"
-series_order: 2
-cover_url: "https://example.com/cover.jpg"
+meta:
+  author: "Test Author"
+  rating: S
+  series_order: 1
 ---
-Book notes here.
+Content.
 MD);
 
     $parser = new FrontmatterParser();
     $result = $parser->parse($file);
 
-    expect($result)->not->toBeNull()
-        ->and($result['frontmatter']['author'])->toBe('Jane Author')
-        ->and($result['frontmatter']['rating'])->toBe('A')
-        ->and($result['frontmatter']['reads'])->toHaveCount(2)
-        ->and($result['frontmatter']['series'])->toBe('The Series Name')
-        ->and($result['frontmatter']['series_order'])->toBe(2)
-        ->and($result['frontmatter']['cover_url'])->toBe('https://example.com/cover.jpg');
+    expect($result['frontmatter']['meta'])->toBe([
+        'author' => 'Test Author',
+        'rating' => 'S',
+        'series_order' => 1,
+    ]);
 });
 
-it('handles book-specific fields defaulting to null when absent', function (): void {
+it('collects flat entity fields into meta for backward compatibility', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
     register_shutdown_function(fn () => @unlink($file));
 
     file_put_contents($file, <<<'MD'
 ---
-id: "20260315-no-book"
-title: "Not a Book"
-domain: tech
-subdomain: fleeting
+id: "20260317-compat-test"
+title: "Old Format Book"
+domain: entertainment
+subdomain: books
+author: "Old Author"
+rating: A
+cover_url: "https://example.com/cover.jpg"
+serial: true
+platform: "patreon"
 ---
-Regular content.
+Content.
 MD);
 
     $parser = new FrontmatterParser();
     $result = $parser->parse($file);
 
-    expect($result)->not->toBeNull()
-        ->and($result['frontmatter']['author'])->toBeNull()
-        ->and($result['frontmatter']['rating'])->toBeNull()
-        ->and($result['frontmatter']['reads'])->toBe([])
-        ->and($result['frontmatter']['series'])->toBeNull()
-        ->and($result['frontmatter']['series_order'])->toBeNull()
-        ->and($result['frontmatter']['cover_url'])->toBeNull();
+    expect($result['frontmatter']['meta']['author'])->toBe('Old Author')
+        ->and($result['frontmatter']['meta']['rating'])->toBe('A')
+        ->and($result['frontmatter']['meta']['cover_url'])->toBe('https://example.com/cover.jpg')
+        ->and($result['frontmatter']['meta']['serial'])->toBeTrue()
+        ->and($result['frontmatter']['meta']['platform'])->toBe('patreon');
+});
+
+it('normalizes reads into events', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
+    register_shutdown_function(fn () => @unlink($file));
+
+    file_put_contents($file, <<<'MD'
+---
+id: "20260317-reads-test"
+title: "Book With Reads"
+domain: entertainment
+subdomain: books
+reads:
+  - "2026-01-15"
+  - "2026-03-17"
+---
+Content.
+MD);
+
+    $parser = new FrontmatterParser();
+    $result = $parser->parse($file);
+
+    expect($result['frontmatter']['events'])->toHaveCount(2)
+        ->and($result['frontmatter']['events'][0]['type'])->toBe('read')
+        ->and($result['frontmatter']['events'][1]['type'])->toBe('read');
+});
+
+it('normalizes watches into events', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
+    register_shutdown_function(fn () => @unlink($file));
+
+    file_put_contents($file, <<<'MD'
+---
+id: "20260317-watches-test"
+title: "Movie With Watches"
+domain: entertainment
+subdomain: movies
+watches:
+  - "2026-03-17"
+---
+Content.
+MD);
+
+    $parser = new FrontmatterParser();
+    $result = $parser->parse($file);
+
+    expect($result['frontmatter']['events'])->toHaveCount(1)
+        ->and($result['frontmatter']['events'][0]['type'])->toBe('watch');
+});
+
+it('normalizes play sessions into events with hours', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
+    register_shutdown_function(fn () => @unlink($file));
+
+    file_put_contents($file, <<<'MD'
+---
+id: "20260317-play-test"
+title: "Game With Sessions"
+domain: entertainment
+subdomain: games
+play_sessions:
+  - date: 2026-03-16
+    hours: 3.5
+  - date: 2026-03-17
+    hours: 2.0
+---
+Content.
+MD);
+
+    $parser = new FrontmatterParser();
+    $result = $parser->parse($file);
+
+    expect($result['frontmatter']['events'])->toHaveCount(2)
+        ->and($result['frontmatter']['events'][0]['type'])->toBe('play_session')
+        ->and($result['frontmatter']['events'][0]['meta']['hours'])->toBe(3.5)
+        ->and($result['frontmatter']['events'][1]['meta']['hours'])->toBe(2.0);
 });
 
 it('handles DateTime objects from YAML parser', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_fm_') . '.md';
     register_shutdown_function(fn () => @unlink($file));
 
-    // Symfony YAML parser converts unquoted ISO datetime strings to DateTime objects
     file_put_contents($file, <<<'MD'
 ---
 id: "20260315-datetime"
@@ -191,19 +267,15 @@ MD);
 
     expect($result)->not->toBeNull();
 
-    // The YAML parser may return DateTime objects for unquoted datetime values
     $created = $result['frontmatter']['created'];
     $modified = $result['frontmatter']['modified'];
 
-    // Symfony YAML parses unquoted ISO datetimes as Unix timestamps (int)
-    // or as DateTime objects depending on version. Either is acceptable.
     expect($created)->not->toBeNull()
         ->and($modified)->not->toBeNull();
 
     if ($created instanceof DateTimeInterface) {
         expect($created->format('Y-m-d'))->toBe('2026-03-15');
     } elseif (is_int($created)) {
-        // Unix timestamp — verify it converts to the right date
         expect(date('Y-m-d', $created))->toBe('2026-03-15');
     } else {
         expect(str_contains((string) $created, '2026-03-15'))->toBeTrue();
@@ -221,7 +293,7 @@ MD);
 it('parses close_reason field', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_test_') . '.md';
     file_put_contents($file, "---\nid: \"test-cr\"\ntitle: \"Test\"\ndomain: tech\nsubdomain: fleeting\nclose_reason: \"Merged into larger project\"\n---\nContent.\n");
-    $parser = new \Vault\FrontmatterParser();
+    $parser = new FrontmatterParser();
     $result = $parser->parse($file);
     expect($result['frontmatter']['close_reason'])->toBe('Merged into larger project');
     unlink($file);
@@ -230,7 +302,7 @@ it('parses close_reason field', function (): void {
 it('parses external_refs list', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_test_') . '.md';
     file_put_contents($file, "---\nid: \"test-er\"\ntitle: \"Test\"\ndomain: tech\nsubdomain: projects\nexternal_refs:\n  - url: \"https://github.com/example/repo\"\n    label: \"Repository\"\n  - url: \"https://example.com\"\n    label: \"Production\"\n---\nContent.\n");
-    $parser = new \Vault\FrontmatterParser();
+    $parser = new FrontmatterParser();
     $result = $parser->parse($file);
     expect($result['frontmatter']['external_refs'])->toHaveCount(2)
         ->and($result['frontmatter']['external_refs'][0]['url'])->toBe('https://github.com/example/repo')
@@ -241,7 +313,7 @@ it('parses external_refs list', function (): void {
 it('defaults close_reason to null and external_refs to empty array', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'vault_test_') . '.md';
     file_put_contents($file, "---\nid: \"test-def\"\ntitle: \"No New Fields\"\ndomain: tech\nsubdomain: fleeting\n---\nContent.\n");
-    $parser = new \Vault\FrontmatterParser();
+    $parser = new FrontmatterParser();
     $result = $parser->parse($file);
     expect($result['frontmatter']['close_reason'])->toBeNull()
         ->and($result['frontmatter']['external_refs'])->toBe([]);

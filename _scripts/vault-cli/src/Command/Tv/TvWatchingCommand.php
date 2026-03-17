@@ -23,11 +23,12 @@ final class TvWatchingCommand extends Command
     {
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, t.creator, t.seasons_watched, t.total_seasons
-                FROM tv_shows t
-                JOIN documents d ON t.doc_id = d.id
-                WHERE d.status = 'growing'
-                ORDER BY d.modified_at DESC
+                SELECT title, meta->>'$.creator' AS creator,
+                       CAST(meta->>'$.seasons_watched' AS INTEGER) AS seasons_watched,
+                       CAST(meta->>'$.total_seasons' AS INTEGER) AS total_seasons
+                FROM documents
+                WHERE subdomain = 'tv' AND status = 'growing'
+                ORDER BY title
             SQL,
         );
 

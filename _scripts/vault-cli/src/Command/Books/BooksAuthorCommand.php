@@ -32,11 +32,10 @@ final class BooksAuthorCommand extends Command
 
         $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT d.title, b.rating, d.status
-                FROM books b
-                JOIN documents d ON b.doc_id = d.id
-                WHERE b.author LIKE :pattern
-                ORDER BY b.series_order
+                SELECT title, rating, status
+                FROM documents
+                WHERE subdomain = 'books' AND meta->>'$.author' LIKE :pattern
+                ORDER BY CAST(meta->>'$.series_order' AS REAL)
             SQL,
             [':pattern' => $pattern],
         );

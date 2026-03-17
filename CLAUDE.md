@@ -130,55 +130,68 @@ todos:
 - `links` use the target document's `id` value
 - `todos` are embedded in the document they relate to
 
-**Book-specific header fields** (added after `summary`, only for `entertainment/books` documents):
+**Entity-specific header fields** are nested under a `meta:` key. Non-entertainment
+documents omit `meta:` or use `meta: {}`. The parser also supports flat entity
+fields (without `meta:` nesting) for backward compatibility.
+
+**Book fields** (added after `summary`, only for `entertainment/books` documents):
 ```yaml
-author: "Author Name"
-series: null              # series document id (also mirrored in links.parent)
-series_order: null        # 1, 2, 3... (use .5 for novellas/side stories)
-rating: null              # S/A/B/C/D/E/F/DNF (null for technical books)
-cover_url: null           # link to cover image (not stored locally)
-reads:                    # list of dates read (most recent last)
+meta:
+  author: "Author Name"
+  series: null              # series document id (also mirrored in links.parent)
+  series_order: null        # 1, 2, 3... (use .5 for novellas/side stories)
+  rating: null              # S/A/B/C/D/E/F/DNF (null for technical books)
+  cover_url: null           # link to cover image (not stored locally)
+  serial: false             # true if serialized (Royal Road, Patreon, etc.)
+  platform: null            # patreon, royalroad, etc. (null for published books)
+  serial_url: null          # direct link to the serial
+  current_chapter: null     # reading progress (chapter number)
+  chapters_available: null  # latest available chapter count
+reads:                      # list of dates read (most recent last)
   - 2025-01-15
   - 2026-03-01
 ```
 
-**Movie-specific header fields** (added after `summary`, only for `entertainment/movies` documents):
+**Movie fields** (added after `summary`, only for `entertainment/movies` documents):
 ```yaml
-director: "Director Name"
-year: 2026                # release year
-genre: "sci-fi"           # primary genre
-runtime_min: 148          # runtime in minutes
-rating: null              # S/A/B/C/D/E/F/DNF
-poster_url: null          # link to poster image
-imdb_id: null             # e.g. "tt1234567"
-watches:                  # list of dates watched (most recent last)
+meta:
+  director: "Director Name"
+  year: 2026                # release year
+  genre: "sci-fi"           # primary genre
+  runtime_min: 148          # runtime in minutes
+  rating: null              # S/A/B/C/D/E/F/DNF
+  poster_url: null          # link to poster image
+  imdb_id: null             # e.g. "tt1234567"
+watches:                    # list of dates watched (most recent last)
   - 2026-03-16
 ```
 
-**TV show-specific header fields** (added after `summary`, only for `entertainment/tv` documents):
+**TV show fields** (added after `summary`, only for `entertainment/tv` documents):
 ```yaml
-creator: "Creator Name"
-year_start: 2020          # first aired
-year_end: null            # null if ongoing
-genre: "drama"
-total_seasons: 5
-seasons_watched: 3        # progress tracking
-rating: null              # S/A/B/C/D/E/F/DNF
-poster_url: null
-imdb_id: null
+meta:
+  creator: "Creator Name"
+  year_start: 2020          # first aired
+  year_end: null            # null if ongoing
+  genre: "drama"
+  total_seasons: 5
+  seasons_watched: 3        # progress tracking
+  rating: null              # S/A/B/C/D/E/F/DNF
+  poster_url: null
+  imdb_id: null
 ```
 
-**Game-specific header fields** (added after `summary`, only for `entertainment/games` documents):
+**Game fields** (added after `summary`, only for `entertainment/games` documents):
 ```yaml
-developer: "Studio Name"
-publisher: "Publisher Name"
-year: 2026                # release year
-genre: "rpg"
-platform: "PC"            # what you played it on
-hours_played: 45.5
-rating: null              # S/A/B/C/D/E/F/DNF
-cover_url: null
-play_sessions:            # list of play dates (with optional hours)
+meta:
+  developer: "Studio Name"
+  publisher: "Publisher Name"
+  year: 2026                # release year
+  genre: "rpg"
+  platform: "PC"            # what you played it on
+  hours_played: 45.5
+  rating: null              # S/A/B/C/D/E/F/DNF
+  cover_url: null
+play_sessions:              # list of play dates (with optional hours)
   - date: 2026-03-16
     hours: 3.5
   - date: 2026-03-17
@@ -186,7 +199,7 @@ play_sessions:            # list of play dates (with optional hours)
 ```
 
 **Valid values:**
-- `status`: seed | growing | mature | dormant | closed | migrated | built | tbr (media backlog)
+- `status`: seed | growing | mature | dormant | closed | migrated | built | tbr (media backlog) | caught-up (serial books)
 - `priority`: p0-critical | p1-high | p2-medium | p3-low | p4-someday
 - `confidence`: speculative | low | medium | high | proven
 - `effort`: trivial | small | medium | large | epic
@@ -202,6 +215,11 @@ seed → growing → mature → dormant (can re-enter growing)
 
 Books: tbr → growing (reading) → mature (read & rated)
                                → dormant (paused)
+
+Serial books: tbr → growing (reading) → caught-up (waiting for new chapters)
+                                       → growing (new chapters available)
+                                       → mature (serial complete or published, rated)
+                                       → dormant (paused)
 ```
 
 - `seed`: Raw capture, minimal detail
@@ -212,6 +230,7 @@ Books: tbr → growing (reading) → mature (read & rated)
 - `migrated`: Moved to another system/project (set `evolved_into` link)
 - `built`: Successfully realized
 - `tbr`: To Be Read — books queued for future reading (books only)
+- `caught-up`: Read all available chapters of a serial; waiting for new releases (serial books only)
 
 ### Body Templates
 
@@ -262,30 +281,21 @@ Use these exact column names when writing SQL — do NOT guess:
 
 | Table | Columns |
 |---|---|
-| `documents` | `id`, `title`, `domain`, `subdomain`, `status`, `priority`, `confidence`, `effort`, `summary`, `file_path`, `created_at`, `modified_at`, `revisit_date`, `close_reason` |
+| `documents` | `id`, `title`, `domain`, `subdomain`, `status`, `priority`, `confidence`, `effort`, `summary`, `file_path`, `created_at`, `modified_at`, `revisit_date`, `close_reason`, `meta` (JSON), `rating` (generated from meta) |
 | `tags` | `doc_id`, `tag` |
 | `links` | `source_id`, `target_id`, `link_type`, `created_at` |
 | `sources` | `id` (auto), `doc_id`, `url`, `title`, `accessed_date` |
-| `books` | `doc_id`, `author`, `series_id`, `series_order`, `rating`, `cover_url` |
-| `reads` | `id` (auto), `doc_id`, `date_read`, `created_at` |
 | `todos` | `id` (auto), `doc_id`, `content`, `due_date`, `status`, `priority`, `created_at` |
 | `external_refs` | `id` (auto), `doc_id`, `url`, `label`, `created_at` |
-| `movies` | `doc_id`, `director`, `year`, `genre`, `runtime_min`, `rating`, `poster_url`, `imdb_id` |
-| `watches` | `id` (auto), `doc_id`, `date_watched`, `created_at` |
-| `tv_shows` | `doc_id`, `creator`, `year_start`, `year_end`, `genre`, `total_seasons`, `seasons_watched`, `rating`, `poster_url`, `imdb_id` |
-| `games` | `doc_id`, `developer`, `publisher`, `year`, `genre`, `platform`, `hours_played`, `rating`, `cover_url` |
-| `play_sessions` | `id` (auto), `doc_id`, `date_played`, `hours`, `created_at` |
+| `media_events` | `id` (auto), `doc_id`, `event_type`, `event_date`, `meta` (JSON), `created_at` |
 | `documents_fts` | `id`, `title`, `summary`, `domain`, `subdomain` |
 
 ### Database Updates
 
 **After every document create/edit/delete**, Claude updates the relevant rows:
 - Parse the document's YAML frontmatter
-- INSERT OR REPLACE into `documents`, `tags`, `links`, `sources`, `todos` tables
-- For `entertainment/books` documents: also INSERT OR REPLACE into `books` table, and sync `reads` table
-- For `entertainment/movies` documents: also INSERT OR REPLACE into `movies` table, and sync `watches` table
-- For `entertainment/tv` documents: also INSERT OR REPLACE into `tv_shows` table
-- For `entertainment/games` documents: also INSERT OR REPLACE into `games` table, and sync `play_sessions` table
+- INSERT OR REPLACE into `documents` (including `meta` JSON), `tags`, `links`, `sources`, `todos` tables
+- For entertainment documents with reads/watches/play_sessions: sync `media_events` table
 - When deleting: remove from all tables (but remember — we never delete documents,
   only change status)
 
@@ -303,13 +313,13 @@ Use these exact column names when writing SQL — do NOT guess:
 | "Stats" | `SELECT status, COUNT(*) FROM documents GROUP BY status` |
 | "What's on my plate?" | `SELECT * FROM todos WHERE status='open' ORDER BY priority, due_date` |
 | "Ideas created this week" | `SELECT * FROM documents WHERE created_at >= date('now', '-7 days')` |
-| "All S-tier books" | `SELECT d.title, b.author FROM books b JOIN documents d ON b.doc_id=d.id WHERE b.rating='S'` |
-| "Books by author X" | `SELECT d.title, b.rating FROM books b JOIN documents d ON b.doc_id=d.id WHERE b.author LIKE '%X%'` |
-| "Books in series Y" | `SELECT d.title, b.series_order, b.rating FROM books b JOIN documents d ON b.doc_id=d.id WHERE b.series_id='Y' ORDER BY b.series_order` |
-| "Reading stats this year" | `SELECT b.rating, COUNT(*) FROM books b JOIN reads r ON b.doc_id=r.doc_id WHERE r.date_read >= date('now', 'start of year') GROUP BY b.rating` |
-| "Recent reads" | `SELECT d.title, b.author, b.rating, r.date_read FROM reads r JOIN books b ON r.doc_id=b.doc_id JOIN documents d ON b.doc_id=d.id ORDER BY r.date_read DESC LIMIT 20` |
-| "Most re-read books" | `SELECT d.title, b.author, COUNT(*) as times_read FROM reads r JOIN books b ON r.doc_id=b.doc_id JOIN documents d ON b.doc_id=d.id GROUP BY r.doc_id ORDER BY times_read DESC` |
-| "What did I re-read this year?" | `SELECT d.title, r.date_read FROM reads r JOIN documents d ON r.doc_id=d.id GROUP BY r.doc_id HAVING COUNT(*)>1 AND MAX(r.date_read) >= date('now', 'start of year')` |
+| "All S-tier books" | `SELECT title, meta->>'$.author' FROM documents WHERE subdomain='books' AND rating='S'` |
+| "Books by author X" | `SELECT title, rating FROM documents WHERE subdomain='books' AND meta->>'$.author' LIKE '%X%'` |
+| "Books in series Y" | `SELECT title, meta->>'$.series_order', rating FROM documents WHERE subdomain='books' AND meta->>'$.series_id'='Y' ORDER BY meta->>'$.series_order'` |
+| "Reading stats this year" | `SELECT d.rating, COUNT(*) FROM media_events me JOIN documents d ON me.doc_id=d.id WHERE me.event_type='read' AND me.event_date >= date('now', 'start of year') GROUP BY d.rating` |
+| "Recent reads" | `SELECT d.title, d.meta->>'$.author', d.rating, me.event_date FROM media_events me JOIN documents d ON me.doc_id=d.id WHERE me.event_type='read' ORDER BY me.event_date DESC LIMIT 20` |
+| "Most re-read books" | `SELECT d.title, d.meta->>'$.author', COUNT(*) as times_read FROM media_events me JOIN documents d ON me.doc_id=d.id WHERE me.event_type='read' GROUP BY me.doc_id ORDER BY times_read DESC` |
+| "All S-tier media" | `SELECT title, subdomain, rating FROM documents WHERE domain='entertainment' AND rating='S'` |
 
 ### Database Maintenance
 
@@ -373,20 +383,15 @@ _scripts/vault-cli/bin/vault <command> [args]
 
 | Command | Description |
 |---|---|
-| `db:upsert-doc` | Insert/update a document — `--id --title --domain --subdomain --file-path --created --modified [--status] [--priority] [--confidence] [--effort] [--summary] [--revisit-date] [--close-reason]` |
+| `db:upsert-doc` | Insert/update a document — `--id --title --domain --subdomain --file-path --created --modified [--status] [--priority] [--confidence] [--effort] [--summary] [--revisit-date] [--close-reason] [--meta '{}']` |
 | `db:set-tags` | Replace all tags — `--id --tags "tag1,tag2,tag3"` |
 | `db:add-link` | Add a link — `--source --target --type` |
-| `db:upsert-book` | Insert/update book metadata — `--id --author [--series-id] [--series-order] [--rating] [--cover-url]` |
-| `db:add-read` | Log a read date — `--id --date` |
+| `db:upsert-meta` | Update entity metadata (JSON merge) — `--id --json '{"author":"...","rating":"S"}'` |
+| `db:add-event` | Log a media event — `--id --type (read/watch/play_session) --date [--json '{"hours":3.5}']` |
 | `db:update-status` | Update status + modified_at — `--id --status [--modified]` |
 | `db:add-source` | Add external source — `--id [--url] [--title] [--accessed]` |
 | `db:add-todo` | Add a TODO — `--content [--doc-id] [--due] [--priority] [--status]` |
 | `db:add-external-ref` | Add external reference — `--id --url [--label]` |
-| `db:upsert-movie` | Insert/update movie metadata — `--id [--director] [--year] [--genre] [--runtime-min] [--rating] [--poster-url] [--imdb-id]` |
-| `db:add-watch` | Log a watch date — `--id --date` |
-| `db:upsert-tv` | Insert/update TV show metadata — `--id [--creator] [--year-start] [--year-end] [--genre] [--total-seasons] [--seasons-watched] [--rating] [--poster-url] [--imdb-id]` |
-| `db:upsert-game` | Insert/update game metadata — `--id [--developer] [--publisher] [--year] [--genre] [--platform] [--hours-played] [--rating] [--cover-url]` |
-| `db:add-play-session` | Log a play session — `--id --date [--hours]` |
 | `db:close-doc` | Close with reason — `--id --status (closed/migrated/built) --reason` |
 
 ### Usage Rules

@@ -3,16 +3,31 @@
 -- This schema defines the queryable index over all vault documents.
 -- Source of truth is always the markdown files. This DB is a derived cache.
 --
+-- Entity-specific metadata (books, movies, TV, games, etc.) is stored in the
+-- documents.meta JSON column. The rating field is a generated column extracted
+-- from meta for indexed queries.
+--
 -- Rebuild: sqlite3 _index/vault.db < _index/schema.sql
 -- Then re-parse all vault/**/*.md frontmatter to populate.
 
 -- Drop existing tables for clean rebuild
 DROP TABLE IF EXISTS documents_fts;
+DROP TABLE IF EXISTS media_events;
 DROP TABLE IF EXISTS todos;
 DROP TABLE IF EXISTS sources;
+DROP TABLE IF EXISTS external_refs;
 DROP TABLE IF EXISTS links;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS documents;
+
+-- Legacy tables (removed in JSON schema refactor)
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS reads;
+DROP TABLE IF EXISTS movies;
+DROP TABLE IF EXISTS watches;
+DROP TABLE IF EXISTS tv_shows;
+DROP TABLE IF EXISTS games;
+DROP TABLE IF EXISTS play_sessions;
 
 -- ────────────────────────────────────
 -- Core document metadata
@@ -31,7 +46,9 @@ CREATE TABLE documents (
     created_at    DATETIME NOT NULL,
     modified_at   DATETIME NOT NULL,
     revisit_date  DATE,
-    close_reason  TEXT
+    close_reason  TEXT,
+    meta          TEXT NOT NULL DEFAULT '{}',
+    rating        TEXT GENERATED ALWAYS AS (meta->>'$.rating') STORED
 );
 
 -- ────────────────────────────────────
@@ -79,33 +96,8 @@ CREATE TABLE todos (
 );
 
 -- ────────────────────────────────────
--- Book-specific metadata
--- ────────────────────────────────────
-DROP TABLE IF EXISTS books;
-CREATE TABLE books (
-    doc_id        TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
-    author        TEXT,
-    series_id     TEXT REFERENCES documents(id),  -- link to series parent document
-    series_order  REAL,                            -- REAL to allow 1.5 for novellas/side stories
-    rating        TEXT,                            -- S/A/B/C/D/E/F/DNF (NULL for technical)
-    cover_url     TEXT
-);
-
--- ────────────────────────────────────
--- Book read dates (supports re-reads)
--- ────────────────────────────────────
-DROP TABLE IF EXISTS reads;
-CREATE TABLE reads (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    doc_id      TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    date_read   DATE NOT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- ────────────────────────────────────
 -- External references (outputs from ideas)
 -- ────────────────────────────────────
-DROP TABLE IF EXISTS external_refs;
 CREATE TABLE external_refs (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     doc_id      TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -115,93 +107,16 @@ CREATE TABLE external_refs (
 );
 
 -- ────────────────────────────────────
--- Movie-specific metadata
+-- Unified media events (reads, watches, play sessions)
 -- ────────────────────────────────────
-DROP TABLE IF EXISTS movies;
-CREATE TABLE movies (
-    doc_id        TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
-    director      TEXT,
-    year          INTEGER,                         -- release year
-    genre         TEXT,                            -- primary genre
-    runtime_min   INTEGER,                         -- runtime in minutes
-    rating        TEXT,                            -- S/A/B/C/D/E/F/DNF
-    poster_url    TEXT,
-    imdb_id       TEXT                             -- for external lookups
+CREATE TABLE media_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id      TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    event_type  TEXT NOT NULL,    -- 'read', 'watch', 'play_session'
+    event_date  DATE NOT NULL,
+    meta        TEXT DEFAULT '{}', -- e.g. {"hours": 3.5} for play sessions
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-
--- ────────────────────────────────────
--- Movie watch dates (supports re-watches)
--- ────────────────────────────────────
-DROP TABLE IF EXISTS watches;
-CREATE TABLE watches (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    doc_id        TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    date_watched  DATE NOT NULL,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- ────────────────────────────────────
--- TV show-specific metadata
--- ────────────────────────────────────
-DROP TABLE IF EXISTS tv_shows;
-CREATE TABLE tv_shows (
-    doc_id          TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
-    creator         TEXT,                          -- showrunner/creator
-    year_start      INTEGER,                       -- first aired
-    year_end        INTEGER,                       -- NULL if ongoing
-    genre           TEXT,
-    total_seasons   INTEGER,
-    seasons_watched INTEGER,                       -- progress tracking
-    rating          TEXT,                          -- S/A/B/C/D/E/F/DNF
-    poster_url      TEXT,
-    imdb_id         TEXT
-);
-
--- ────────────────────────────────────
--- Game-specific metadata
--- ────────────────────────────────────
-DROP TABLE IF EXISTS games;
-CREATE TABLE games (
-    doc_id        TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
-    developer     TEXT,
-    publisher     TEXT,
-    year          INTEGER,                         -- release year
-    genre         TEXT,
-    platform      TEXT,                            -- what you played it on
-    hours_played  REAL,
-    rating        TEXT,                            -- S/A/B/C/D/E/F/DNF
-    cover_url     TEXT
-);
-
--- ────────────────────────────────────
--- Game play sessions (supports tracking over time)
--- ────────────────────────────────────
-DROP TABLE IF EXISTS play_sessions;
-CREATE TABLE play_sessions (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    doc_id        TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    date_played   DATE NOT NULL,
-    hours         REAL,                            -- optional per-session hours
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_books_author    ON books(author);
-CREATE INDEX idx_books_series    ON books(series_id);
-CREATE INDEX idx_books_rating    ON books(rating);
-CREATE INDEX idx_reads_doc       ON reads(doc_id);
-CREATE INDEX idx_reads_date      ON reads(date_read);
-CREATE INDEX idx_movies_director ON movies(director);
-CREATE INDEX idx_movies_year     ON movies(year);
-CREATE INDEX idx_movies_rating   ON movies(rating);
-CREATE INDEX idx_watches_doc     ON watches(doc_id);
-CREATE INDEX idx_watches_date    ON watches(date_watched);
-CREATE INDEX idx_tv_creator      ON tv_shows(creator);
-CREATE INDEX idx_tv_rating       ON tv_shows(rating);
-CREATE INDEX idx_games_developer ON games(developer);
-CREATE INDEX idx_games_platform  ON games(platform);
-CREATE INDEX idx_games_rating    ON games(rating);
-CREATE INDEX idx_play_sessions_doc  ON play_sessions(doc_id);
-CREATE INDEX idx_play_sessions_date ON play_sessions(date_played);
 
 -- ────────────────────────────────────
 -- Full-text search index
@@ -243,6 +158,7 @@ CREATE INDEX idx_documents_subdomain  ON documents(domain, subdomain);
 CREATE INDEX idx_documents_revisit    ON documents(revisit_date);
 CREATE INDEX idx_documents_created    ON documents(created_at);
 CREATE INDEX idx_documents_modified   ON documents(modified_at);
+CREATE INDEX idx_documents_rating     ON documents(rating);
 CREATE INDEX idx_tags_tag             ON tags(tag);
 CREATE INDEX idx_links_source        ON links(source_id);
 CREATE INDEX idx_links_target        ON links(target_id);
@@ -251,3 +167,6 @@ CREATE INDEX idx_todos_status        ON todos(status, due_date);
 CREATE INDEX idx_todos_doc           ON todos(doc_id);
 CREATE INDEX idx_sources_doc         ON sources(doc_id);
 CREATE INDEX idx_external_refs_doc   ON external_refs(doc_id);
+CREATE INDEX idx_media_events_doc    ON media_events(doc_id);
+CREATE INDEX idx_media_events_type   ON media_events(event_type);
+CREATE INDEX idx_media_events_date   ON media_events(event_date);
