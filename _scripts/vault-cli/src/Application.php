@@ -84,6 +84,9 @@ final class Application extends BaseApplication
         $this->addCommand(new Command\Games\GamesPlatformCommand($db));
         $this->addCommand(new Command\Games\GamesStatsCommand($db));
 
+        // Vehicle commands
+        $this->addCommand(new Command\Vehicle\ImportAcarCommand($db, $projectRoot));
+
         // Write commands
         $this->addCommand(new Command\Db\UpsertDocCommand($db));
         $this->addCommand(new Command\Db\SetTagsCommand($db));

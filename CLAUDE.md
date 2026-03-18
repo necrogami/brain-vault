@@ -47,10 +47,52 @@ memory/
 
 ### Directory Rules
 
-- All idea documents live under `vault/{domain}/{subdomain}/{YYYY}/{MM}/`
+- **Default:** All idea documents live under `vault/{domain}/{subdomain}/{YYYY}/{MM}/`
+- **Entertainment exception:** Entertainment media uses a creator-based directory structure
+  instead of date-based. See **Entertainment Directory Structure** below.
 - Directories are created **on-demand** — do not pre-create empty directories
 - System files (`_registry/`, `_templates/`, `_index/`, `_scripts/`) live at the project root
 - NEVER nest ideas inside other ideas — the knowledge graph handles relationships
+
+### Entertainment Directory Structure
+
+Entertainment subdomains (`books`, `movies`, `tv`, `games`) use a creator-based trie
+structure to handle high-volume cataloging:
+
+```
+vault/entertainment/{media-type}/{first-letter}/{creator-slug}/{series-slug}/filename.md
+```
+
+**Rules:**
+- `{first-letter}`: First letter of the creator's **surname** (for real names) or
+  **pen name** (for pen names). Lowercase single character.
+- `{creator-slug}`: Slugified creator name (e.g., `timothy-ellis`, `plotarmorhq`)
+- `{series-slug}`: Slugified series name. Only create a series subdirectory if the
+  book belongs to a series. Standalone books go directly in the creator directory.
+- **Universe docs** (multi-series parent documents) live at the **creator level**,
+  not inside any series directory.
+- **Multi-author works**: File under the primary/first author.
+
+**Creator type by media:**
+- Books → author
+- Movies → director
+- TV → creator
+- Games → developer
+
+**Examples:**
+```
+vault/entertainment/books/e/timothy-ellis/                              # author dir
+├── 20260317-180000-hunter-imperium-universe.md                         # universe doc (author level)
+├── the-hunter-legacy/                                                  # series dir
+│   ├── 20260317-180300-the-hunter-legacy.md                           # series doc
+│   └── 20260317-180301-hero-at-large.md                               # book
+├── imagedit/
+│   └── ...
+vault/entertainment/books/h/shane-hammond/
+└── 20260317-160000-dungeon-heroes-omnibus.md                           # standalone book
+vault/entertainment/movies/k/joseph-kosinski/
+└── 20260317-163000-only-the-brave.md                                   # standalone movie
+```
 
 ---
 
@@ -548,9 +590,12 @@ or condense it. Show it exactly as the CLI prints it:
 
   RECENT ACTIVITY (last 48h)
   ─────────────────
-  • {count} ideas created
-  • {count} ideas updated
-  • {count} ideas closed/migrated/built
+  Domain         Created  Updated  Closed
+  ───────────────────────────────────────
+  {domain}           {n}      {n}     {n}
+  ...
+  ───────────────────────────────────────
+  Total              {n}      {n}     {n}
   • {count} TODOs completed
 
   VAULT STATS

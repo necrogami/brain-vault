@@ -10,6 +10,62 @@
 -- Rebuild: sqlite3 _index/vault.db < _index/schema.sql
 -- Then re-parse all vault/**/*.md frontmatter to populate.
 
+-- ════════════════════════════════════
+-- SQLite Best Practices — Pragmas
+-- ════════════════════════════════════
+-- Two categories:
+--   Persistent  — stored in the database file, survive across connections
+--   Per-connection — must be re-applied on every new connection
+--
+-- The per-connection pragmas here apply during rebuild. Applications (e.g.
+-- the vault CLI) MUST also set them on every connection they open.
+
+-- ── Persistent pragmas ──────────────
+
+-- Write-Ahead Logging: readers never block writers, writers never block
+-- readers. Crash-safe. Faster than the default rollback journal for most
+-- workloads. Persists until explicitly changed back.
+PRAGMA journal_mode = WAL;
+
+-- ── Per-connection pragmas ──────────
+
+-- Enforce foreign key constraints. SQLite declares FK syntax but IGNORES it
+-- by default — without this, ON DELETE CASCADE and referential integrity are
+-- silently disabled.
+PRAGMA foreign_keys = ON;
+
+-- Safe with WAL: syncs only at checkpoint boundaries instead of every commit.
+-- At worst, a power loss loses the last transaction (no corruption risk).
+-- Significant write throughput improvement over the default FULL.
+PRAGMA synchronous = NORMAL;
+
+-- Wait up to 5 seconds when another connection holds a lock, instead of
+-- returning SQLITE_BUSY immediately. Prevents spurious failures during
+-- concurrent CLI invocations.
+PRAGMA busy_timeout = 5000;
+
+-- 16 MB page cache (negative value = KiB). Default is ~2 MB. Keeps hot
+-- pages in memory across queries within a session.
+PRAGMA cache_size = -16000;
+
+-- Keep temporary tables and indices in memory instead of writing temp files.
+PRAGMA temp_store = MEMORY;
+
+-- Memory-mapped I/O: let the OS map up to 128 MB of the database file into
+-- the process address space. Bypasses read() syscalls for faster sequential
+-- and random reads on large databases.
+PRAGMA mmap_size = 134217728;
+
+-- ════════════════════════════════════
+-- Maintenance notes (not run during rebuild)
+-- ════════════════════════════════════
+-- Run periodically or after large imports:
+--   PRAGMA optimize;           -- update query planner statistics
+--   PRAGMA incremental_vacuum; -- reclaim free pages (if auto_vacuum=incremental)
+--   PRAGMA integrity_check;    -- full database consistency check
+
+-- ════════════════════════════════════
+
 -- Drop existing tables for clean rebuild
 DROP TABLE IF EXISTS documents_fts;
 DROP TABLE IF EXISTS media_events;

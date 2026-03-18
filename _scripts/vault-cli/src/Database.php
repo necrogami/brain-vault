@@ -21,6 +21,16 @@ final class Database
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
+
+        // Per-connection pragmas — must be set on every new connection.
+        // See _index/schema.sql for rationale on each setting.
+        $this->pdo->exec('PRAGMA foreign_keys = ON');
+        $this->pdo->exec('PRAGMA journal_mode = WAL');
+        $this->pdo->exec('PRAGMA synchronous = NORMAL');
+        $this->pdo->exec('PRAGMA busy_timeout = 5000');
+        $this->pdo->exec('PRAGMA cache_size = -16000');
+        $this->pdo->exec('PRAGMA temp_store = MEMORY');
+        $this->pdo->exec('PRAGMA mmap_size = 134217728');
     }
 
     public function getPath(): string

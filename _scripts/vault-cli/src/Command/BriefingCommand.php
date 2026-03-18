@@ -137,27 +137,27 @@ final class BriefingCommand extends Command
     {
         $cutoff = date('Y-m-d H:i:s', strtotime('-48 hours'));
 
-        $created = (int) $this->db->fetchValue(
-            'SELECT COUNT(*) FROM documents WHERE created_at >= :cutoff',
-            [':cutoff' => $cutoff],
-        );
-
-        $updated = (int) $this->db->fetchValue(
+        // Per-domain breakdown of created/updated/closed
+        $rows = $this->db->fetchAll(
             <<<'SQL'
-                SELECT COUNT(*) FROM documents
-                WHERE modified_at >= :cutoff
-                  AND created_at < :cutoff
+                SELECT
+                    domain,
+                    SUM(CASE WHEN created_at >= :cutoff1 THEN 1 ELSE 0 END) AS created,
+                    SUM(CASE WHEN modified_at >= :cutoff2 AND created_at < :cutoff3 THEN 1 ELSE 0 END) AS updated,
+                    SUM(CASE WHEN modified_at >= :cutoff4 AND status IN ('closed', 'migrated', 'built') THEN 1 ELSE 0 END) AS closed
+                FROM documents
+                WHERE modified_at >= :cutoff5 OR created_at >= :cutoff6
+                GROUP BY domain
+                ORDER BY domain
             SQL,
-            [':cutoff' => $cutoff],
-        );
-
-        $closed = (int) $this->db->fetchValue(
-            <<<'SQL'
-                SELECT COUNT(*) FROM documents
-                WHERE modified_at >= :cutoff
-                  AND status IN (:closed, :migrated, :built)
-            SQL,
-            [':cutoff' => $cutoff, ':closed' => 'closed', ':migrated' => 'migrated', ':built' => 'built'],
+            [
+                ':cutoff1' => $cutoff,
+                ':cutoff2' => $cutoff,
+                ':cutoff3' => $cutoff,
+                ':cutoff4' => $cutoff,
+                ':cutoff5' => $cutoff,
+                ':cutoff6' => $cutoff,
+            ],
         );
 
         $todosDone = (int) $this->db->fetchValue(
@@ -172,10 +172,56 @@ final class BriefingCommand extends Command
         $output->writeln('');
         $output->writeln('  RECENT ACTIVITY (last 48h)');
         $output->writeln('  ' . str_repeat("\u{2500}", 17));
-        $output->writeln("  \u{2022} {$created} ideas created");
-        $output->writeln("  \u{2022} {$updated} ideas updated");
-        $output->writeln("  \u{2022} {$closed} ideas closed/migrated/built");
-        $output->writeln("  \u{2022} {$todosDone} TODOs completed");
+
+        if (count($rows) === 0 && $todosDone === 0) {
+            $output->writeln('  <info>None</info>');
+            return;
+        }
+
+        if (count($rows) > 0) {
+            // Calculate column widths
+            $domainWidth = max(6, ...array_map(fn ($r) => strlen((string) $r['domain']), $rows));
+
+            $header = sprintf(
+                '  %-' . $domainWidth . 's  %7s  %7s  %6s',
+                'Domain',
+                'Created',
+                'Updated',
+                'Closed',
+            );
+            $output->writeln($header);
+            $output->writeln('  ' . str_repeat("\u{2500}", strlen(trim($header))));
+
+            $totals = ['created' => 0, 'updated' => 0, 'closed' => 0];
+
+            foreach ($rows as $row) {
+                $output->writeln(sprintf(
+                    '  %-' . $domainWidth . 's  %7d  %7d  %6d',
+                    $row['domain'],
+                    (int) $row['created'],
+                    (int) $row['updated'],
+                    (int) $row['closed'],
+                ));
+                $totals['created'] += (int) $row['created'];
+                $totals['updated'] += (int) $row['updated'];
+                $totals['closed'] += (int) $row['closed'];
+            }
+
+            if (count($rows) > 1) {
+                $output->writeln('  ' . str_repeat("\u{2500}", strlen(trim($header))));
+                $output->writeln(sprintf(
+                    '  %-' . $domainWidth . 's  %7d  %7d  %6d',
+                    'Total',
+                    $totals['created'],
+                    $totals['updated'],
+                    $totals['closed'],
+                ));
+            }
+        }
+
+        if ($todosDone > 0) {
+            $output->writeln("  \u{2022} {$todosDone} TODOs completed");
+        }
     }
 
     private function renderVaultStats(OutputInterface $output): void
